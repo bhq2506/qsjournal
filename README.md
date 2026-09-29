@@ -3,6 +3,7 @@
 Web app statis untuk mencari jurnal Scopus berdasarkan **QS Subject Area** (pemetaan via kode ASJC).
 
 **Live:** https://bhq2506.github.io/qsjournal/
+
 Setiap jurnal menampilkan **Nama Jurnal, Publisher, Quartile (SJR 2025)** dan **QS Subject Area**, dan judulnya bisa diklik menuju halaman Scopus (`https://www.scopus.com/sourceid/<id>`).
 
 - 27.000 jurnal aktif · 56 QS subject · 5 broad faculty area
