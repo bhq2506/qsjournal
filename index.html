@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>QS Subject Journal Finder</title>
+<meta name="description" content="Search Scopus journals by QS subject area, with SJR 2025 quartile and a direct link to each journal's Scopus page.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: catalogue tool — sticky search header, subject index on the left, journal ledger on the right; index collapses to a select on phones */
+:root {
+  --bg: #f5f7f9;
+  --surface: #ffffff;
+  --ink: #16212e;
+  --muted: #5b6877;
+  --line: #dde3ea;
+  --accent: #0b5d7a;
+  --accent-soft: #e2eff4;
+  --q1: #1f7a4d; --q1-bg: #e1f2e8;
+  --q2: #2d5f9a; --q2-bg: #e3ecf8;
+  --q3: #9a6512; --q3-bg: #f7eddb;
+  --q4: #9b3b36; --q4-bg: #f6e3e1;
+  --qn: #5b6877; --qn-bg: #eceff3;
+  --mark: #fff0b3;
+  --font-display: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f151c; --surface: #161e27; --ink: #e4eaf0; --muted: #93a1b0; --line: #26313d;
+    --accent: #5fb6d4; --accent-soft: #15303c;
+    --q1: #6fd3a0; --q1-bg: #133226; --q2: #8db8ee; --q2-bg: #172a42;
+    --q3: #e8b766; --q3-bg: #36291277; --q4: #ee9a93; --q4-bg: #3a1d1b; --qn: #93a1b0; --qn-bg: #222c37;
+    --mark: #5c4d12; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f151c; --surface: #161e27; --ink: #e4eaf0; --muted: #93a1b0; --line: #26313d;
+  --accent: #5fb6d4; --accent-soft: #15303c;
+  --q1: #6fd3a0; --q1-bg: #133226; --q2: #8db8ee; --q2-bg: #172a42;
+  --q3: #e8b766; --q3-bg: #36291277; --q4: #ee9a93; --q4-bg: #3a1d1b; --qn: #93a1b0; --qn-bg: #222c37;
+  --mark: #5c4d12; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body); -webkit-font-smoothing: antialiased; }
+[hidden] { display: none !important; }
+a { color: inherit; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--surface); border-bottom: 1px solid var(--line);
+  padding-inline: 16px;
+}
+.top-inner { max-width: 1280px; margin: 0 auto; padding-block: 14px; display: grid; gap: 12px; grid-template-columns: auto 1fr; align-items: center; }
+.brand { display: flex; flex-direction: column; min-width: 0; }
+.brand h1 { font: 700 1.35rem/1.15 var(--font-display); margin: 0; letter-spacing: -0.01em; }
+.brand .sub { font-size: 0.78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.search { position: relative; }
+.search input {
+  width: 100%; padding: 11px 40px 11px 40px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); font-size: 1rem;
+}
+.search input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+.search input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); background: var(--surface); }
+.search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--muted); pointer-events: none; }
+.search .clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: 0; background: none; padding: 6px 8px; cursor: pointer; color: var(--muted); border-radius: 6px; }
+.search .clear:hover { background: var(--line); }
+
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 48px; display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 28px; align-items: start; }
+
+/* Subject index */
+.index { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 92px); max-height: calc(100vh - 110px); overflow-y: auto; padding-right: 4px; }
+.index h2 { font: 600 0.7rem/1 var(--font-body); text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 18px 0 6px; }
+.index h2:first-child { margin-top: 0; }
+.index ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.subj {
+  width: 100%; display: flex; justify-content: space-between; gap: 10px; text-align: left;
+  border: 0; background: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.88rem; line-height: 1.3;
+}
+.subj:hover { background: var(--line); }
+.subj[aria-current="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.subj .n { color: var(--muted); font: 0.75rem var(--font-mono); font-variant-numeric: tabular-nums; padding-top: 2px; }
+.subj[aria-current="true"] .n { color: var(--accent); }
+.subj-select { display: none; }
+
+/* Result header */
+.head { display: grid; gap: 14px; margin-bottom: 14px; }
+.head h2 { font: 600 1.6rem/1.2 var(--font-display); margin: 0; text-wrap: balance; }
+.head .scope { font-size: 0.85rem; color: var(--muted); }
+.head .scope code { font-family: var(--font-mono); font-size: 0.78rem; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 11px;
+  font-size: 0.82rem; cursor: pointer; display: inline-flex; gap: 6px; align-items: baseline; font-variant-numeric: tabular-nums;
+}
+.chip .c { color: var(--muted); font-family: var(--font-mono); font-size: 0.74rem; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chip[aria-pressed="true"] .c { color: inherit; opacity: 0.75; }
+.opts { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; font-size: 0.85rem; }
+.opts label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.opts select { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 5px 8px; }
+.count { font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Journal ledger */
+.ledger { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.row { display: grid; grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.4fr) 88px; gap: 16px; padding: 14px 18px; border-top: 1px solid var(--line); align-items: start; }
+.row:first-child { border-top: 0; }
+.row.th { background: var(--bg); font: 600 0.7rem/1 var(--font-body); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding-block: 10px; }
+.jt { font-weight: 600; font-size: 0.98rem; line-height: 1.35; text-decoration: none; color: var(--ink); }
+.jt:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.jt .ext { display: inline-block; width: 12px; height: 12px; margin-left: 5px; vertical-align: -1px; color: var(--muted); }
+.ids { font: 0.74rem var(--font-mono); color: var(--muted); margin-top: 3px; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.oa { font: 600 0.66rem var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--q1); }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.tag { border: 1px solid var(--line); background: none; border-radius: 4px; padding: 1px 7px; font-size: 0.74rem; color: var(--muted); cursor: pointer; line-height: 1.5; }
+.tag:hover { border-color: var(--accent); color: var(--accent); }
+.tag.on { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+.pub { font-size: 0.88rem; color: var(--muted); overflow-wrap: anywhere; }
+.q { justify-self: start; font: 600 0.8rem/1 var(--font-mono); padding: 5px 8px; border-radius: 5px; white-space: nowrap; }
+.q.Q1 { color: var(--q1); background: var(--q1-bg); }
+.q.Q2 { color: var(--q2); background: var(--q2-bg); }
+.q.Q3 { color: var(--q3); background: var(--q3-bg); }
+.q.Q4 { color: var(--q4); background: var(--q4-bg); }
+.q.NR { color: var(--qn); background: var(--qn-bg); font-size: 0.7rem; font-family: var(--font-body); }
+mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1px; }
+.more { display: flex; justify-content: center; padding: 16px; border-top: 1px solid var(--line); }
+.more button { border: 1px solid var(--line); background: var(--bg); padding: 8px 18px; border-radius: 8px; cursor: pointer; font-weight: 500; }
+.more button:hover { border-color: var(--accent); color: var(--accent); }
+.empty { padding: 40px 18px; text-align: center; color: var(--muted); }
+.loading { padding: 60px 18px; text-align: center; color: var(--muted); }
+.foot { max-width: 1280px; margin: 0 auto; padding-inline: 16px; padding-block: 0 40px; font-size: 0.78rem; color: var(--muted); line-height: 1.6; }
+.foot p { max-width: 75ch; margin: 0 0 6px; }
+
+@media (max-width: 900px) {
+  .top-inner { grid-template-columns: 1fr; gap: 10px; }
+  .wrap { grid-template-columns: minmax(0, 1fr); gap: 16px; padding-top: 14px; }
+  .index { display: none; }
+  .subj-select { display: block; width: 100%; margin-bottom: 16px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+  .row { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 14px; }
+  .row.th { display: none; }
+  .row .pub { grid-column: 1 / -1; grid-row: 2; }
+  .row .q { grid-column: 2; grid-row: 1; }
+  .head h2 { font-size: 1.3rem; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <h1>QS Subject Journal Finder</h1>
+      <span class="sub" id="meta">Scopus journals mapped to QS subjects via ASJC codes</span>
+    </div>
+    <div class="search" role="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Search journal title, publisher, or ISSN" autocomplete="off" aria-label="Search journal">
+      <button class="clear" id="clear" type="button" aria-label="Clear search" hidden>✕</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <nav class="index" id="index" aria-label="QS subject areas"></nav>
+  <section style="min-width:0">
+    <select class="subj-select" id="subjSelect" aria-label="QS subject area"></select>
+    <div class="head">
+      <div>
+        <h2 id="title">All QS subjects</h2>
+        <div class="scope" id="scope"></div>
+      </div>
+      <div class="controls">
+        <div class="chips" id="chips" role="group" aria-label="Filter by quartile"></div>
+        <div class="opts">
+          <label><input type="checkbox" id="oa"> Open access only</label>
+          <label>Sort
+            <select id="sort">
+              <option value="title">Title A–Z</option>
+              <option value="q">Quartile (Q1 first)</option>
+              <option value="pub">Publisher</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <div class="count" id="count"></div>
+    </div>
+    <div class="ledger" id="ledger"><div class="loading">Loading journal list…</div></div>
+  </section>
+</main>
+
+<footer class="foot">
+  <p><strong>How journals are assigned.</strong> A journal appears under a QS subject when at least one of its Scopus ASJC codes matches the ASJC codes QS maps to that subject. A journal with several ASJC codes can sit in several subjects.</p>
+  <p><strong>About the quartile.</strong> Quartile is the journal's SJR 2025 <em>best</em> quartile across all its Scopus categories. It is not specific to the QS subject shown, so a journal marked Q1 may be Q2 or lower in the category that matches your subject. Check the Scopus page before relying on it.</p>
+  <p id="src"></p>
+</footer>
+
+<script>
+(() => {
+  const PAGE = 50;
+  const QS = ["Q1", "Q2", "Q3", "Q4", "Not ranked"];
+  const QRANK = { Q1: 1, Q2: 2, Q3: 3, Q4: 4, "Not ranked": 5 };
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const norm = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const slug = (s) => norm(s).replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const fmt = (n) => n.toLocaleString("en-US");
+  const fmtIssn = (s) => (s && s.length === 8 ? s.slice(0, 4) + "-" + s.slice(4) : s);
+  const extIcon = '<svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>';
+
+  let DATA, J = [], S = [];
+  const state = { subject: -1, q: "", quart: "all", oa: false, sort: "title", shown: PAGE };
+
+  // Restore last-used options (per browser only)
+  try {
+    const saved = JSON.parse(localStorage.getItem("qsjf") || "{}");
+    if (saved.sort) state.sort = saved.sort;
+  } catch (e) {}
+  const save = () => { try { localStorage.setItem("qsjf", JSON.stringify({ sort: state.sort })); } catch (e) {} };
+
+  fetch("data/journals.json")
+    .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(init)
+    .catch(() => {
+      $("ledger").innerHTML = '<div class="empty">The journal list could not be loaded. Check that <code>data/journals.json</code> sits next to this page, and open it through a web server (GitHub Pages or <code>python -m http.server</code>), not as a local file.</div>';
+    });
+
+  function init(d) {
+    DATA = d; S = d.subjects;
+    J = d.journals.map((r) => ({
+      id: r[0], t: r[1], p: r[2], q: r[3], issn: r[4], eissn: r[5], oa: !!r[6], s: r[7],
+      k: norm(r[1] + " \u0001 " + r[2] + " \u0001 " + r[4] + " " + r[5] + " " + fmtIssn(r[4]) + " " + fmtIssn(r[5])),
+    }));
+    $("meta").textContent = `${fmt(J.length)} Scopus journals · ${S.length} QS subjects · SJR 2025 quartiles`;
+    $("src").textContent = `Data: ${d.meta.source}. Generated ${d.meta.generated}.`;
+    $("sort").value = state.sort;
+    buildIndex();
+    fromHash();
+    render();
+  }
+
+  function buildIndex() {
+    let html = `<ul><li><button class="subj" data-s="-1"><span>All QS subjects</span><span class="n">${fmt(J.length)}</span></button></li></ul>`;
+    let opts = `<option value="-1">All QS subjects (${fmt(J.length)})</option>`;
+    DATA.broad.forEach((b) => {
+      const list = S.map((s, i) => [s, i]).filter(([s]) => s.broad[0] === b);
+      html += `<h2>${esc(b)}</h2><ul>` + list.map(([s, i]) => `<li><button class="subj" data-s="${i}"><span>${esc(s.name)}</span><span class="n">${fmt(s.n)}</span></button></li>`).join("") + "</ul>";
+      opts += `<optgroup label="${esc(b)}">` + list.map(([s, i]) => `<option value="${i}">${esc(s.name)} (${fmt(s.n)})</option>`).join("") + "</optgroup>";
+    });
+    $("index").innerHTML = html;
+    $("subjSelect").innerHTML = opts;
+  }
+
+  function setSubject(i, scroll) {
+    state.subject = i; state.shown = PAGE;
+    const h = i < 0 ? "" : "#" + slug(S[i].name);
+    if (location.hash !== h) history.replaceState(null, "", h || location.pathname + location.search);
+    render();
+    if (scroll) window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function fromHash() {
+    const h = decodeURIComponent(location.hash.slice(1));
+    state.subject = h ? S.findIndex((s) => slug(s.name) === h) : -1;
+  }
+
+  function matches() {
+    const terms = norm(state.q).trim().split(/\s+/).filter(Boolean);
+    const out = [];
+    for (const j of J) {
+      if (state.subject >= 0 && !j.s.includes(state.subject)) continue;
+      if (state.oa && !j.oa) continue;
+      if (terms.length && !terms.every((t) => j.k.includes(t))) continue;
+      out.push(j);
+    }
+    return out;
+  }
+
+  function highlight(text) {
+    const terms = norm(state.q).trim().split(/\s+/).filter((t) => t.length > 1);
+    if (!terms.length) return esc(text);
+    const n = norm(text);
+    const marks = new Array(text.length).fill(false);
+    // NFD normalisation can change length; only highlight when lengths line up
+    if (n.length !== text.length) return esc(text);
+    terms.forEach((t) => { let p = n.indexOf(t); while (p !== -1) { for (let k = p; k < p + t.length; k++) marks[k] = true; p = n.indexOf(t, p + t.length); } });
+    let out = "", open = false;
+    for (let i = 0; i < text.length; i++) {
+      if (marks[i] && !open) { out += "<mark>"; open = true; }
+      if (!marks[i] && open) { out += "</mark>"; open = false; }
+      out += esc(text[i]);
+    }
+    return out + (open ? "</mark>" : "");
+  }
+
+  function render() {
+    // subject index state
+    document.querySelectorAll(".subj").forEach((b) => b.setAttribute("aria-current", String(+b.dataset.s === state.subject)));
+    $("subjSelect").value = String(state.subject);
+
+    const s = state.subject >= 0 ? S[state.subject] : null;
+    $("title").textContent = s ? s.name : state.q ? "Search results" : "All QS subjects";
+    $("scope").innerHTML = s
+      ? `${esc(s.broad.join(" · "))} &nbsp;·&nbsp; ASJC <code>${esc(s.asjc)}</code>`
+      : "Pick a QS subject on the left, or search across every subject.";
+
+    const base = matches();
+    const counts = { all: base.length };
+    QS.forEach((q) => (counts[q] = 0));
+    base.forEach((j) => counts[j.q]++);
+    $("chips").innerHTML = [["all", "All"], ...QS.map((q) => [q, q])]
+      .map(([k, l]) => `<button class="chip" type="button" data-q="${k}" aria-pressed="${state.quart === k}">${l}<span class="c">${fmt(counts[k] || 0)}</span></button>`)
+      .join("");
+
+    let list = state.quart === "all" ? base : base.filter((j) => j.q === state.quart);
+    if (state.sort === "q") list = list.slice().sort((a, b) => QRANK[a.q] - QRANK[b.q] || a.t.localeCompare(b.t));
+    else if (state.sort === "pub") list = list.slice().sort((a, b) => a.p.localeCompare(b.p) || a.t.localeCompare(b.t));
+
+    const where = s ? ` in ${s.name}` : "";
+    const what = state.q ? ` matching “${state.q}”` : "";
+    $("count").textContent = `${fmt(list.length)} journal${list.length === 1 ? "" : "s"}${where}${what}`;
+
+    if (!list.length) {
+      $("ledger").innerHTML = `<div class="empty">No journals found${what}${where}. Try fewer words, an ISSN without the dash, or switch to <strong>All QS subjects</strong>.</div>`;
+      return;
+    }
+    const rows = list.slice(0, state.shown).map((j) => {
+      const ids = [j.issn && "ISSN " + fmtIssn(j.issn), j.eissn && "eISSN " + fmtIssn(j.eissn)].filter(Boolean).join("</span><span>");
+      const tags = j.s.map((i) => `<button class="tag${i === state.subject ? " on" : ""}" type="button" data-s="${i}">${esc(S[i].name)}</button>`).join("");
+      const qc = j.q === "Not ranked" ? "NR" : j.q;
+      return `<div class="row">
+        <div style="min-width:0">
+          <a class="jt" href="https://www.scopus.com/sourceid/${j.id}" target="_blank" rel="noopener" title="Open in Scopus">${highlight(j.t)}${extIcon}</a>
+          <div class="ids">${ids ? "<span>" + ids + "</span>" : ""}${j.oa ? '<span class="oa">Open access</span>' : ""}</div>
+          <div class="tags" aria-label="QS subject areas">${tags}</div>
+        </div>
+        <div class="pub">${highlight(j.p)}</div>
+        <span class="q ${qc}" title="SJR 2025 best quartile">${esc(j.q)}</span>
+      </div>`;
+    });
+    const rest = list.length - state.shown;
+    $("ledger").innerHTML =
+      `<div class="row th"><span>Journal · QS subject areas</span><span>Publisher</span><span>Quartile</span></div>` +
+      rows.join("") +
+      (rest > 0 ? `<div class="more"><button type="button" id="more">Show ${fmt(Math.min(PAGE, rest))} more · ${fmt(rest)} left</button></div>` : "");
+  }
+
+  // Events
+  let t;
+  $("q").addEventListener("input", (e) => {
+    $("clear").hidden = !e.target.value;
+    clearTimeout(t);
+    t = setTimeout(() => { state.q = e.target.value; state.shown = PAGE; render(); }, 120);
+  });
+  $("clear").addEventListener("click", () => { $("q").value = ""; $("clear").hidden = true; state.q = ""; state.shown = PAGE; render(); $("q").focus(); });
+  $("index").addEventListener("click", (e) => { const b = e.target.closest(".subj"); if (b) setSubject(+b.dataset.s, false); });
+  $("subjSelect").addEventListener("change", (e) => setSubject(+e.target.value, false));
+  $("chips").addEventListener("click", (e) => { const b = e.target.closest(".chip"); if (b) { state.quart = b.dataset.q; state.shown = PAGE; render(); } });
+  $("oa").addEventListener("change", (e) => { state.oa = e.target.checked; state.shown = PAGE; render(); });
+  $("sort").addEventListener("change", (e) => { state.sort = e.target.value; state.shown = PAGE; save(); render(); });
+  $("ledger").addEventListener("click", (e) => {
+    if (e.target.id === "more") { state.shown += PAGE; render(); return; }
+    const tag = e.target.closest(".tag");
+    if (tag) setSubject(+tag.dataset.s, true);
+  });
+  window.addEventListener("hashchange", () => { if (!DATA) return; fromHash(); state.shown = PAGE; render(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "/" && document.activeElement !== $("q")) { e.preventDefault(); $("q").focus(); }
+  });
+})();
+</script>
+</body>
+</html>
