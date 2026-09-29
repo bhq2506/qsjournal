@@ -77,9 +77,25 @@ button, input, select { font: inherit; color: inherit; }
 
 /* Subject index */
 .index { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 92px); max-height: calc(100vh - 110px); overflow-y: auto; padding-right: 4px; }
-.index h2 { font: 600 0.7rem/1 var(--font-body); text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 18px 0 6px; }
-.index h2:first-child { margin-top: 0; }
 .index ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.index-bar { display: flex; justify-content: space-between; align-items: center; margin: 14px 0 4px; padding: 0 10px; }
+.index-bar span { font: 600 0.7rem/1 var(--font-body); text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); }
+.index-bar button { border: 0; background: none; padding: 2px 0; font-size: 0.75rem; color: var(--accent); cursor: pointer; }
+.index-bar button:hover { text-decoration: underline; text-underline-offset: 2px; }
+.grp { border-top: 1px solid var(--line); }
+.grp:last-child { border-bottom: 1px solid var(--line); }
+.grp summary {
+  list-style: none; cursor: pointer; display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 8px; align-items: center;
+  padding: 10px 10px; border-radius: 6px; font-weight: 600; font-size: 0.86rem; line-height: 1.3; user-select: none;
+}
+.grp summary::-webkit-details-marker { display: none; }
+.grp summary:hover { background: var(--line); }
+.grp summary .chev { width: 14px; height: 14px; color: var(--muted); transition: transform 0.15s ease; }
+.grp[open] summary .chev { transform: rotate(90deg); }
+.grp summary .meta { font: 0.72rem var(--font-mono); color: var(--muted); font-weight: 400; font-variant-numeric: tabular-nums; }
+.grp.has-current summary { color: var(--accent); }
+.grp.has-current summary .meta { color: var(--accent); }
+.grp ul { padding: 0 0 10px 12px; }
 .subj {
   width: 100%; display: flex; justify-content: space-between; gap: 10px; text-align: left;
   border: 0; background: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.88rem; line-height: 1.3;
@@ -246,16 +262,50 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
     render();
   }
 
+  const chev = '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+  let openGroups = null; // Set of broad-area names the viewer has open
+  try { const g = JSON.parse(localStorage.getItem("qsjf-open") || "null"); if (Array.isArray(g)) openGroups = new Set(g); } catch (e) {}
+  const saveGroups = () => { try { localStorage.setItem("qsjf-open", JSON.stringify([...openGroups])); } catch (e) {} };
+
   function buildIndex() {
     let html = `<ul><li><button class="subj" data-s="-1"><span>All QS subjects</span><span class="n">${fmt(J.length)}</span></button></li></ul>`;
+    html += `<div class="index-bar"><span>QS Broad Faculty Area</span><button type="button" id="toggleAll">Expand all</button></div>`;
     let opts = `<option value="-1">All QS subjects (${fmt(J.length)})</option>`;
+    if (!openGroups) openGroups = new Set(state.subject >= 0 ? [(S[state.subject].group || S[state.subject].broad[0])] : []);
     DATA.broad.forEach((b) => {
-      const list = S.map((s, i) => [s, i]).filter(([s]) => s.broad[0] === b);
-      html += `<h2>${esc(b)}</h2><ul>` + list.map(([s, i]) => `<li><button class="subj" data-s="${i}"><span>${esc(s.name)}</span><span class="n">${fmt(s.n)}</span></button></li>`).join("") + "</ul>";
+      const list = S.map((s, i) => [s, i]).filter(([s]) => (s.group || s.broad[0]) === b);
+      html += `<details class="grp" data-b="${esc(b)}"${openGroups.has(b) ? " open" : ""}>
+        <summary>${chev}<span>${esc(b)}</span><span class="meta">${list.length}</span></summary>
+        <ul>` + list.map(([s, i]) => `<li><button class="subj" data-s="${i}"><span>${esc(s.name)}</span><span class="n">${fmt(s.n)}</span></button></li>`).join("") + `</ul></details>`;
       opts += `<optgroup label="${esc(b)}">` + list.map(([s, i]) => `<option value="${i}">${esc(s.name)} (${fmt(s.n)})</option>`).join("") + "</optgroup>";
     });
     $("index").innerHTML = html;
     $("subjSelect").innerHTML = opts;
+    $("index").querySelectorAll(".grp").forEach((d) => d.addEventListener("toggle", () => {
+      d.open ? openGroups.add(d.dataset.b) : openGroups.delete(d.dataset.b);
+      saveGroups(); syncToggleAll();
+    }));
+    $("toggleAll").addEventListener("click", () => {
+      const groups = [...$("index").querySelectorAll(".grp")];
+      const openAll = !groups.every((d) => d.open);
+      groups.forEach((d) => (d.open = openAll));
+    });
+    syncToggleAll();
+  }
+
+  function syncToggleAll() {
+    const groups = [...$("index").querySelectorAll(".grp")];
+    $("toggleAll").textContent = groups.every((d) => d.open) ? "Collapse all" : "Expand all";
+  }
+
+  // Keep the group of the selected subject open and marked
+  function syncGroups() {
+    const cur = state.subject >= 0 ? (S[state.subject].group || S[state.subject].broad[0]) : null;
+    $("index").querySelectorAll(".grp").forEach((d) => {
+      const has = d.dataset.b === cur;
+      d.classList.toggle("has-current", has);
+      if (has && !d.open) d.open = true;
+    });
   }
 
   function setSubject(i, scroll) {
@@ -303,6 +353,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   function render() {
     // subject index state
     document.querySelectorAll(".subj").forEach((b) => b.setAttribute("aria-current", String(+b.dataset.s === state.subject)));
+    syncGroups();
     $("subjSelect").value = String(state.subject);
 
     const s = state.subject >= 0 ? S[state.subject] : null;

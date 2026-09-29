@@ -39,11 +39,15 @@ def main(path, out="data/journals.json"):
 
     # Display names from the Menu sheet hyperlinks (needs non-read-only mode)
     wbl = openpyxl.load_workbook(path)
-    menu = {}
+    # Menu columns B/D/F/H/J = the five QS broad faculty areas (official primary grouping)
+    menu, menu_group = {}, {}
+    col_group = {2: BROAD_ORDER[0], 4: BROAD_ORDER[1], 6: BROAD_ORDER[2], 8: BROAD_ORDER[3], 10: BROAD_ORDER[4]}
     for row in wbl["Menu"].iter_rows():
         for c in row:
             if c.hyperlink and c.hyperlink.location:
-                menu[c.hyperlink.location.split("!")[0].strip("'")] = c.value
+                sheet = c.hyperlink.location.split("!")[0].strip("'")
+                menu[sheet] = c.value
+                menu_group[sheet] = col_group.get(c.column)
 
     subjects, journals = [], {}
     for ws in wb.worksheets:
@@ -71,14 +75,16 @@ def main(path, out="data/journals.json"):
                     "issn": r[2] or "", "eissn": r[3] or "", "oa": r[9] or "", "s": [],
                 }
             j["s"].append(idx)
+        broads = [b.strip() for b in broad.split(";")]
         subjects.append({
             "name": menu.get(ws.title, title),
-            "broad": [b.strip() for b in broad.split(";")],
+            "group": menu_group.get(ws.title) or broads[0],
+            "broad": broads,
             "asjc": asjc, "n": n,
         })
 
     order = sorted(range(len(subjects)),
-                   key=lambda i: (BROAD_ORDER.index(subjects[i]["broad"][0]), subjects[i]["name"]))
+                   key=lambda i: (BROAD_ORDER.index(subjects[i]["group"]), subjects[i]["name"]))
     remap = {old: new for new, old in enumerate(order)}
     S = [subjects[i] for i in order]
     J = [[j["id"], j["t"], j["p"], j["q"], j["issn"], j["eissn"], j["oa"],
