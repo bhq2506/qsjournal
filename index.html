@@ -144,6 +144,8 @@ button, input, select { font: inherit; color: inherit; }
 .model { font: 600 0.72rem/1 var(--font-body); padding: 4px 8px; border-radius: 999px; white-space: nowrap; color: var(--qn); background: var(--qn-bg); }
 .model.diamond { color: var(--q1); background: var(--q1-bg); }
 .model.waiver { color: var(--q3); background: var(--q3-bg); }
+.model.gold { color: var(--q2); background: var(--q2-bg); }
+.facts .verified { color: var(--q1); font-size: 0.72rem; font-weight: 600; }
 .facts .site { font-size: 0.78rem; color: var(--accent); text-decoration: none; white-space: nowrap; }
 .facts .site:hover { text-decoration: underline; text-underline-offset: 2px; }
 .facts .note { grid-column: 1 / -1; color: var(--muted); font-size: 0.78rem; border-top: 1px dashed var(--line); padding-top: 6px; }
@@ -215,6 +217,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
               <option value="all">Semua jurnal</option>
               <option value="any">Ada data biaya</option>
               <option value="Diamond OA">Diamond OA (gratis)</option>
+              <option value="Gold OA">Gold OA (ada APC)</option>
               <option value="Hybrid">Hybrid</option>
               <option value="Gold OA + Waiver">Gold OA + Waiver</option>
               <option value="Subscription">Subscription</option>
@@ -238,7 +241,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
 <footer class="foot">
   <p><strong>How journals are assigned.</strong> A journal appears under a QS subject when at least one of its Scopus ASJC codes matches the ASJC codes QS maps to that subject. A journal with several ASJC codes can sit in several subjects.</p>
   <p><strong>About the quartile.</strong> Quartile is the journal's SJR 2025 <em>best</em> quartile across all its Scopus categories. It is not specific to the QS subject shown, so a journal marked Q1 may be Q2 or lower in the category that matches your subject. Check the Scopus page before relying on it.</p>
-  <p><strong>Biaya publikasi, frekuensi terbit, kecepatan review.</strong> Diambil dari <em>Database Jurnal Scopus Gratis APC</em> dan baru tersedia untuk sebagian jurnal. Angkanya berupa estimasi dan belum diverifikasi satu per satu; kebijakan APC sering berubah. Selalu cek situs jurnal sebelum submit. Kecepatan review adalah waktu sampai keputusan pertama, bukan sampai terbit.</p>
+  <p><strong>Biaya publikasi, frekuensi terbit, kecepatan review.</strong> Diambil dari <em>Database Jurnal Scopus Gratis APC</em> dan baru tersedia untuk sebagian jurnal. Angkanya berupa estimasi dan belum diverifikasi satu per satu; kebijakan APC sering berubah. Biaya jurnal MDPI sudah dikoreksi dengan daftar APC resmi MDPI (mdpi.com/apc, 10 Okt 2026) dan diberi tanda ✓. Selalu cek situs jurnal sebelum submit. Kecepatan review adalah waktu sampai keputusan pertama, bukan sampai terbit.</p>
   <p id="src"></p>
 </footer>
 
@@ -378,14 +381,14 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
     return out + (open ? "</mark>" : "");
   }
 
-  // apc row: [apc, model, review, submit->publish, frequency, url, note]
+  // apc row: [apc, model, review, submit->publish, frequency, url, note, verified source]
   function facts(x) {
-    const [apc, model, rev, tp, freq, url, note] = x;
-    const mc = model === "Diamond OA" ? "diamond" : /waiver/i.test(model) ? "waiver" : "";
+    const [apc, model, rev, tp, freq, url, note, src] = x;
+    const mc = model === "Diamond OA" ? "diamond" : /waiver/i.test(model) ? "waiver" : model === "Gold OA" ? "gold" : "";
     const href = url ? (/^https?:\/\//.test(url) ? url : "https://" + url) : "";
     const dash = '<span style="color:var(--muted)">–</span>';
     return `<dl class="facts">
-      <div><dt>Biaya Publikasi</dt><dd>${apc ? esc(apc) : dash}</dd></div>
+      <div><dt>Biaya Publikasi</dt><dd>${apc ? esc(apc) : dash}${src ? `<small class="verified">✓ Sumber resmi: ${esc(src)}</small>` : ""}</dd></div>
       <div><dt>Frekuensi Terbit</dt><dd>${freq ? esc(freq) : dash}</dd></div>
       <div><dt>Kecepatan Review</dt><dd>${rev ? esc(rev) : dash}${rev && /minggu|week/i.test(rev) ? "<small>sampai keputusan pertama</small>" : ""}${tp ? `<small>Submit → terbit ${esc(tp)}</small>` : ""}</dd></div>
       <div class="side">${model ? `<span class="model ${mc}">${esc(model)}</span>` : ""}${href ? `<a class="site" href="${esc(href)}" target="_blank" rel="noopener">Situs jurnal ↗</a>` : ""}</div>

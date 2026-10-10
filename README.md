@@ -64,3 +64,4 @@ Pencocokan pakai ISSN/eISSN, lalu judul. Baris yang tidak cocok ditulis ke `data
 - Quartile adalah **SJR 2025 best quartile** lintas semua kategori Scopus jurnal tersebut, **bukan** quartile di kategori yang sesuai dengan QS subject. Jurnal yang tertulis Q1 bisa saja Q2/Q3 di kategori yang relevan.
 - Jurnal tanpa data SJR ditandai *Not ranked*.
 - Biaya publikasi, frekuensi terbit, dan kecepatan review berasal dari *Database Jurnal Scopus Gratis APC* dan **belum diverifikasi per jurnal**. Kecepatan review = waktu sampai keputusan pertama.
+- Biaya jurnal **MDPI** dikoreksi dari daftar APC resmi MDPI (`data/overrides/mdpi_apc.csv`, sumber https://www.mdpi.com/apc, 10 Okt 2026). Database sumber keliru menandai seluruh jurnal MDPI sebagai Diamond OA/gratis.
