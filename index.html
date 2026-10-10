@@ -136,6 +136,17 @@ button, input, select { font: inherit; color: inherit; }
 .ids { font: 0.74rem var(--font-mono); color: var(--muted); margin-top: 3px; display: flex; flex-wrap: wrap; gap: 4px 12px; }
 .oa { font: 600 0.66rem var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--q1); }
 .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.facts { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) auto; gap: 8px 20px; padding: 10px 12px; margin-top: 2px; background: var(--bg); border-radius: 8px; font-size: 0.84rem; align-items: start; }
+.facts dt { font: 600 0.66rem/1.2 var(--font-body); text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 2px; }
+.facts dd { margin: 0; line-height: 1.4; overflow-wrap: anywhere; }
+.facts dd small { display: block; color: var(--muted); font-size: 0.76rem; }
+.facts .side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.model { font: 600 0.72rem/1 var(--font-body); padding: 4px 8px; border-radius: 999px; white-space: nowrap; color: var(--qn); background: var(--qn-bg); }
+.model.diamond { color: var(--q1); background: var(--q1-bg); }
+.model.waiver { color: var(--q3); background: var(--q3-bg); }
+.facts .site { font-size: 0.78rem; color: var(--accent); text-decoration: none; white-space: nowrap; }
+.facts .site:hover { text-decoration: underline; text-underline-offset: 2px; }
+.facts .note { grid-column: 1 / -1; color: var(--muted); font-size: 0.78rem; border-top: 1px dashed var(--line); padding-top: 6px; }
 .tag { border: 1px solid var(--line); background: none; border-radius: 4px; padding: 1px 7px; font-size: 0.74rem; color: var(--muted); cursor: pointer; line-height: 1.5; }
 .tag:hover { border-color: var(--accent); color: var(--accent); }
 .tag.on { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
@@ -165,6 +176,8 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   .row .pub { grid-column: 1 / -1; grid-row: 2; }
   .row .q { grid-column: 2; grid-row: 1; }
   .head h2 { font-size: 1.3rem; }
+  .facts { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .facts .side { flex-direction: row; align-items: center; justify-content: space-between; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
 </style>
@@ -197,6 +210,16 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
         <div class="chips" id="chips" role="group" aria-label="Filter by quartile"></div>
         <div class="opts">
           <label><input type="checkbox" id="oa"> Open access only</label>
+          <label>Model biaya
+            <select id="model">
+              <option value="all">Semua jurnal</option>
+              <option value="any">Ada data biaya</option>
+              <option value="Diamond OA">Diamond OA (gratis)</option>
+              <option value="Hybrid">Hybrid</option>
+              <option value="Gold OA + Waiver">Gold OA + Waiver</option>
+              <option value="Subscription">Subscription</option>
+            </select>
+          </label>
           <label>Sort
             <select id="sort">
               <option value="title">Title A–Z</option>
@@ -215,6 +238,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
 <footer class="foot">
   <p><strong>How journals are assigned.</strong> A journal appears under a QS subject when at least one of its Scopus ASJC codes matches the ASJC codes QS maps to that subject. A journal with several ASJC codes can sit in several subjects.</p>
   <p><strong>About the quartile.</strong> Quartile is the journal's SJR 2025 <em>best</em> quartile across all its Scopus categories. It is not specific to the QS subject shown, so a journal marked Q1 may be Q2 or lower in the category that matches your subject. Check the Scopus page before relying on it.</p>
+  <p><strong>Biaya publikasi, frekuensi terbit, kecepatan review.</strong> Diambil dari <em>Database Jurnal Scopus Gratis APC</em> dan baru tersedia untuk sebagian jurnal. Angkanya berupa estimasi dan belum diverifikasi satu per satu; kebijakan APC sering berubah. Selalu cek situs jurnal sebelum submit. Kecepatan review adalah waktu sampai keputusan pertama, bukan sampai terbit.</p>
   <p id="src"></p>
 </footer>
 
@@ -232,7 +256,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   const extIcon = '<svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>';
 
   let DATA, J = [], S = [];
-  const state = { subject: -1, q: "", quart: "all", oa: false, sort: "title", shown: PAGE };
+  const state = { subject: -1, q: "", quart: "all", oa: false, model: "all", sort: "title", shown: PAGE };
 
   // Restore last-used options (per browser only)
   try {
@@ -241,21 +265,24 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   } catch (e) {}
   const save = () => { try { localStorage.setItem("qsjf", JSON.stringify({ sort: state.sort })); } catch (e) {} };
 
-  fetch("data/journals.json")
-    .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
-    .then(init)
+  const getJSON = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
+  Promise.all([getJSON("data/journals.json"), getJSON("data/apc.json").catch(() => null)])
+    .then(([d, apc]) => init(d, apc))
     .catch(() => {
       $("ledger").innerHTML = '<div class="empty">The journal list could not be loaded. Check that <code>data/journals.json</code> sits next to this page, and open it through a web server (GitHub Pages or <code>python -m http.server</code>), not as a local file.</div>';
     });
 
-  function init(d) {
+  function init(d, apc) {
     DATA = d; S = d.subjects;
+    const X = (apc && apc.journals) || {};
     J = d.journals.map((r) => ({
-      id: r[0], t: r[1], p: r[2], q: r[3], issn: r[4], eissn: r[5], oa: !!r[6], s: r[7],
+      id: r[0], t: r[1], p: r[2], q: r[3], issn: r[4], eissn: r[5], oa: !!r[6], s: r[7], x: X[r[0]] || null,
       k: norm(r[1] + " \u0001 " + r[2] + " \u0001 " + r[4] + " " + r[5] + " " + fmtIssn(r[4]) + " " + fmtIssn(r[5])),
     }));
     $("meta").textContent = `${fmt(J.length)} Scopus journals · ${S.length} QS subjects · SJR 2025 quartiles`;
-    $("src").textContent = `Data: ${d.meta.source}. Generated ${d.meta.generated}.`;
+    const nx = J.filter((j) => j.x).length;
+    $("src").textContent = `Data: ${d.meta.source}. Generated ${d.meta.generated}.` + (nx ? ` Biaya publikasi, frekuensi terbit dan kecepatan review untuk ${fmt(nx)} jurnal: ${apc.source}.` : "");
+    $("model").querySelector('[value="any"]').textContent = `Ada data biaya (${fmt(nx)})`;
     $("sort").value = state.sort;
     buildIndex();
     fromHash();
@@ -327,6 +354,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
     for (const j of J) {
       if (state.subject >= 0 && !j.s.includes(state.subject)) continue;
       if (state.oa && !j.oa) continue;
+      if (state.model !== "all" && !(j.x && (state.model === "any" || j.x[1] === state.model))) continue;
       if (terms.length && !terms.every((t) => j.k.includes(t))) continue;
       out.push(j);
     }
@@ -348,6 +376,21 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
       out += esc(text[i]);
     }
     return out + (open ? "</mark>" : "");
+  }
+
+  // apc row: [apc, model, review, submit->publish, frequency, url, note]
+  function facts(x) {
+    const [apc, model, rev, tp, freq, url, note] = x;
+    const mc = model === "Diamond OA" ? "diamond" : /waiver/i.test(model) ? "waiver" : "";
+    const href = url ? (/^https?:\/\//.test(url) ? url : "https://" + url) : "";
+    const dash = '<span style="color:var(--muted)">–</span>';
+    return `<dl class="facts">
+      <div><dt>Biaya Publikasi</dt><dd>${apc ? esc(apc) : dash}</dd></div>
+      <div><dt>Frekuensi Terbit</dt><dd>${freq ? esc(freq) : dash}</dd></div>
+      <div><dt>Kecepatan Review</dt><dd>${rev ? esc(rev) : dash}${rev && /minggu|week/i.test(rev) ? "<small>sampai keputusan pertama</small>" : ""}${tp ? `<small>Submit → terbit ${esc(tp)}</small>` : ""}</dd></div>
+      <div class="side">${model ? `<span class="model ${mc}">${esc(model)}</span>` : ""}${href ? `<a class="site" href="${esc(href)}" target="_blank" rel="noopener">Situs jurnal ↗</a>` : ""}</div>
+      ${note ? `<div class="note">${esc(note)}</div>` : ""}
+    </dl>`;
   }
 
   function render() {
@@ -394,6 +437,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
         </div>
         <div class="pub">${highlight(j.p)}</div>
         <span class="q ${qc}" title="SJR 2025 best quartile">${esc(j.q)}</span>
+        ${j.x ? facts(j.x) : ""}
       </div>`;
     });
     const rest = list.length - state.shown;
@@ -415,6 +459,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   $("subjSelect").addEventListener("change", (e) => setSubject(+e.target.value, false));
   $("chips").addEventListener("click", (e) => { const b = e.target.closest(".chip"); if (b) { state.quart = b.dataset.q; state.shown = PAGE; render(); } });
   $("oa").addEventListener("change", (e) => { state.oa = e.target.checked; state.shown = PAGE; render(); });
+  $("model").addEventListener("change", (e) => { state.model = e.target.value; state.shown = PAGE; render(); });
   $("sort").addEventListener("change", (e) => { state.sort = e.target.value; state.shown = PAGE; save(); render(); });
   $("ledger").addEventListener("click", (e) => {
     if (e.target.id === "more") { state.shown += PAGE; render(); return; }
