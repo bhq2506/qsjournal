@@ -135,6 +135,10 @@ button, input, select { font: inherit; color: inherit; }
 .jt .ext { display: inline-block; width: 12px; height: 12px; margin-left: 5px; vertical-align: -1px; color: var(--muted); }
 .ids { font: 0.74rem var(--font-mono); color: var(--muted); margin-top: 3px; display: flex; flex-wrap: wrap; gap: 4px 12px; }
 .oa { font: 600 0.66rem var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--q1); }
+.noapc { font: 600 0.66rem/1 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--q1); background: var(--q1-bg); padding: 3px 6px; border-radius: 4px; align-self: center; }
+.noapc-toggle { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--q1); color: var(--q1); background: var(--surface); border-radius: 999px; padding: 5px 12px; font-weight: 600; font-size: 0.85rem; cursor: pointer; font-variant-numeric: tabular-nums; }
+.noapc-toggle .c { font: 400 0.74rem var(--font-mono); opacity: 0.8; }
+.noapc-toggle[aria-pressed="true"] { background: var(--q1); color: var(--surface); }
 .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
 .facts { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) auto; gap: 8px 20px; padding: 10px 12px; margin-top: 2px; background: var(--bg); border-radius: 8px; font-size: 0.84rem; align-items: start; }
 .facts dt { font: 600 0.66rem/1.2 var(--font-body); text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 2px; }
@@ -206,6 +210,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
       <div class="controls">
         <div class="chips" id="chips" role="group" aria-label="Filter by quartile"></div>
         <div class="opts">
+          <button type="button" class="noapc-toggle" id="noapc" aria-pressed="false" title="Jurnal tanpa biaya publikasi menurut noapc.com">No APC <span class="c" id="noapcCount"></span></button>
           <label><input type="checkbox" id="oa"> Open access only</label>
           <label>Sort
             <select id="sort">
@@ -225,6 +230,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
 <footer class="foot">
   <p><strong>How journals are assigned.</strong> A journal appears under a QS subject when at least one of its Scopus ASJC codes matches the ASJC codes QS maps to that subject. A journal with several ASJC codes can sit in several subjects.</p>
   <p><strong>About the quartile.</strong> Quartile is the journal's SJR 2025 <em>best</em> quartile across all its Scopus categories. It is not specific to the QS subject shown, so a journal marked Q1 may be Q2 or lower in the category that matches your subject. Check the Scopus page before relying on it.</p>
+  <p><strong>No APC.</strong> Jurnal ditandai No APC jika tercantum di <a href="https://noapc.com" target="_blank" rel="noopener">noapc.com</a> sebagai jurnal open access tanpa biaya publikasi, dicocokkan lewat ISSN. Daftar ini dari pihak ketiga dan bisa tertinggal dari kebijakan terbaru jurnal; cek situs jurnal sebelum submit.</p>
   <p id="src"></p>
 </footer>
 
@@ -242,7 +248,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   const extIcon = '<svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>';
 
   let DATA, J = [], S = [];
-  const state = { subject: -1, q: "", quart: "all", oa: false, sort: "title", shown: PAGE };
+  const state = { subject: -1, q: "", quart: "all", oa: false, noapc: false, sort: "title", shown: PAGE };
 
   // Restore last-used options (per browser only)
   try {
@@ -252,22 +258,24 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   const save = () => { try { localStorage.setItem("qsjf", JSON.stringify({ sort: state.sort })); } catch (e) {} };
 
   const getJSON = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
-  Promise.all([getJSON("data/journals.json"), getJSON("data/publication_info.json").catch(() => null)])
-    .then(([d, info]) => init(d, info))
+  Promise.all([getJSON("data/journals.json"), getJSON("data/publication_info.json").catch(() => null), getJSON("data/noapc.json").catch(() => null)])
+    .then(([d, info, na]) => init(d, info, na))
     .catch(() => {
       $("ledger").innerHTML = '<div class="empty">The journal list could not be loaded. Check that <code>data/journals.json</code> sits next to this page, and open it through a web server (GitHub Pages or <code>python -m http.server</code>), not as a local file.</div>';
     });
 
-  function init(d, info) {
+  function init(d, info, na) {
+    const NA = new Set((na && na.ids) || []);
     DATA = d; S = d.subjects;
     const X = (info && info.journals) || {};
     J = d.journals.map((r) => ({
-      id: r[0], t: r[1], p: r[2], q: r[3], issn: r[4], eissn: r[5], oa: !!r[6], s: r[7], x: X[r[0]] || null,
+      id: r[0], t: r[1], p: r[2], q: r[3], issn: r[4], eissn: r[5], oa: !!r[6], s: r[7], x: X[r[0]] || null, na: NA.has(r[0]),
       k: norm(r[1] + " \u0001 " + r[2] + " \u0001 " + r[4] + " " + r[5] + " " + fmtIssn(r[4]) + " " + fmtIssn(r[5])),
     }));
     $("meta").textContent = `${fmt(J.length)} Scopus journals · ${S.length} QS subjects · SJR 2025 quartiles`;
     const nx = J.filter((j) => j.x).length;
-    $("src").textContent = `Data: ${d.meta.source}. Generated ${d.meta.generated}.` + (nx ? ` Frekuensi terbit dan kecepatan review untuk ${fmt(nx)} jurnal: ${info.source}.` : "");
+    $("src").textContent = `Data: ${d.meta.source}. Generated ${d.meta.generated}.` + (nx ? ` Frekuensi terbit dan kecepatan review untuk ${fmt(nx)} jurnal: ${info.source}.` : "") + (NA.size ? ` Status No APC untuk ${fmt(NA.size)} jurnal: ${na.source} (diambil ${na.retrieved}).` : "");
+    if (!NA.size) $("noapc").hidden = true;
     $("sort").value = state.sort;
     buildIndex();
     fromHash();
@@ -387,7 +395,11 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
       ? `${esc(s.broad.join(" · "))} &nbsp;·&nbsp; ASJC <code>${esc(s.asjc)}</code>`
       : "Pick a QS subject on the left, or search across every subject.";
 
-    const base = matches();
+    const pool = matches();
+    const noApcCount = pool.reduce((n, j) => n + (j.na ? 1 : 0), 0);
+    $("noapcCount").textContent = fmt(noApcCount);
+    $("noapc").setAttribute("aria-pressed", String(state.noapc));
+    const base = state.noapc ? pool.filter((j) => j.na) : pool;
     const counts = { all: base.length };
     QS.forEach((q) => (counts[q] = 0));
     base.forEach((j) => counts[j.q]++);
@@ -399,7 +411,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
     if (state.sort === "q") list = list.slice().sort((a, b) => QRANK[a.q] - QRANK[b.q] || a.t.localeCompare(b.t));
     else if (state.sort === "pub") list = list.slice().sort((a, b) => a.p.localeCompare(b.p) || a.t.localeCompare(b.t));
 
-    const where = s ? ` in ${s.name}` : "";
+    const where = (state.noapc ? " with No APC" : "") + (s ? ` in ${s.name}` : "");
     const what = state.q ? ` matching “${state.q}”` : "";
     $("count").textContent = `${fmt(list.length)} journal${list.length === 1 ? "" : "s"}${where}${what}`;
 
@@ -414,7 +426,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
       return `<div class="row">
         <div style="min-width:0">
           <a class="jt" href="https://www.scopus.com/sourceid/${j.id}" target="_blank" rel="noopener" title="Open in Scopus">${highlight(j.t)}${extIcon}</a>
-          <div class="ids">${ids ? "<span>" + ids + "</span>" : ""}${j.oa ? '<span class="oa">Open access</span>' : ""}</div>
+          <div class="ids">${ids ? "<span>" + ids + "</span>" : ""}${j.oa ? '<span class="oa">Open access</span>' : ""}${j.na ? '<span class="noapc" title="Terdaftar di noapc.com sebagai jurnal tanpa biaya publikasi">No APC</span>' : ""}</div>
           <div class="tags" aria-label="QS subject areas">${tags}</div>
         </div>
         <div class="pub">${highlight(j.p)}</div>
@@ -440,6 +452,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   $("index").addEventListener("click", (e) => { const b = e.target.closest(".subj"); if (b) setSubject(+b.dataset.s, false); });
   $("subjSelect").addEventListener("change", (e) => setSubject(+e.target.value, false));
   $("chips").addEventListener("click", (e) => { const b = e.target.closest(".chip"); if (b) { state.quart = b.dataset.q; state.shown = PAGE; render(); } });
+  $("noapc").addEventListener("click", () => { state.noapc = !state.noapc; state.shown = PAGE; render(); });
   $("oa").addEventListener("change", (e) => { state.oa = e.target.checked; state.shown = PAGE; render(); });
   $("sort").addEventListener("change", (e) => { state.sort = e.target.value; state.shown = PAGE; save(); render(); });
   $("ledger").addEventListener("click", (e) => {

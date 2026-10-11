@@ -8,7 +8,7 @@ Setiap jurnal menampilkan **Nama Jurnal, Publisher, Quartile (SJR 2025)** dan **
 
 - 27.000 jurnal aktif · 56 QS subject · 5 broad faculty area
 - Cari berdasarkan judul, publisher, atau ISSN/eISSN (tekan `/` untuk fokus ke kotak pencarian)
-- Filter per QS subject, quartile (Q1–Q4, Not ranked), dan open access
+- Filter per QS subject, quartile (Q1–Q4, Not ranked), open access, dan **No APC** (jurnal tanpa biaya publikasi menurut [noapc.com](https://noapc.com); ±1.290 jurnal)
 - **Frekuensi Terbit dan Kecepatan Review** untuk ±1.460 jurnal, dari *Database Jurnal Scopus Gratis APC*
 - Tag QS subject pada tiap jurnal bisa diklik untuk pindah ke subject tersebut
 - Link langsung ke subject: `.../#computer-science`, `.../#business-and-management-studies`, dst.
@@ -56,6 +56,12 @@ python scripts/build_publication_info.py "path/ke/Database Jurnal Scopus Gratis 
 
 Pencocokan pakai ISSN/eISSN, lalu judul. Baris yang tidak cocok ditulis ke `data/apc_unmatched.csv` (tidak ikut di-commit).
 
+Status No APC (`data/noapc.json`) diperbarui dari noapc.com:
+
+```bash
+python scripts/build_noapc.py
+```
+
 `build_data.py` membaca sheet `SJR 2025`, `Menu`, dan setiap sheet subject (baris 1–3 = judul, broad area, kode ASJC; header di baris 6; data mulai baris 7).
 
 ## Catatan metodologi
@@ -64,3 +70,4 @@ Pencocokan pakai ISSN/eISSN, lalu judul. Baris yang tidak cocok ditulis ke `data
 - Quartile adalah **SJR 2025 best quartile** lintas semua kategori Scopus jurnal tersebut, **bukan** quartile di kategori yang sesuai dengan QS subject. Jurnal yang tertulis Q1 bisa saja Q2/Q3 di kategori yang relevan.
 - Jurnal tanpa data SJR ditandai *Not ranked*.
 - Frekuensi terbit dan kecepatan review berasal dari *Database Jurnal Scopus Gratis APC* dan belum diverifikasi per jurnal. Kecepatan review = waktu sampai keputusan pertama.
+- Status **No APC** berasal dari noapc.com (pihak ketiga, dicocokkan lewat ISSN, diambil 11 Okt 2026). Situs itu mengklaim ±2.600 jurnal tetapi halamannya hanya memuat ±1.700; yang cocok dengan daftar Scopus/QS di aplikasi ±1.290.
