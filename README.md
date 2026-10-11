@@ -8,7 +8,7 @@ Setiap jurnal menampilkan **Nama Jurnal, Publisher, Quartile (SJR 2025)** dan **
 
 - 27.000 jurnal aktif · 56 QS subject · 5 broad faculty area
 - Cari berdasarkan judul, publisher, atau ISSN/eISSN (tekan `/` untuk fokus ke kotak pencarian)
-- Filter per QS subject, quartile (Q1–Q4, Not ranked), open access, dan model biaya (Diamond OA, Hybrid, dll.)
+- Filter per QS subject, quartile (Q1–Q4, Not ranked), open access, dan ketersediaan data biaya
 - **Biaya Publikasi, Frekuensi Terbit, Kecepatan Review** untuk ±1.460 jurnal, dari *Database Jurnal Scopus Gratis APC*
 - Tag QS subject pada tiap jurnal bisa diklik untuk pindah ke subject tersebut
 - Link langsung ke subject: `.../#computer-science`, `.../#business-and-management-studies`, dst.

@@ -33,6 +33,7 @@ FIELDS = {
     "url": "URL", "issn": "ISSN/ E-ISSN", "model": "Model", "note": "Keterangan",
 }
 OUT_KEYS = ["apc", "model", "rev", "tp", "freq", "url", "note", "src"]
+PUBLIC_KEYS = [k for k in OUT_KEYS if k != "model"]
 MDPI_ALIASES = {"c journal of carbon research": "c", "oral health diseases therapies and technologies": "oral"}
 
 
@@ -130,8 +131,18 @@ def main(path):
             added += 1
     print(f"MDPI: corrected {fixed} workbook rows, added APC for {added} more MDPI journals")
 
+    # The publishing-model label (Diamond OA / Hybrid / ...) is unreliable in the source
+    # workbook, so it is not published: drop the column and model words from the notes.
+    mi = OUT_KEYS.index("model")
+    model_words = re.compile(r"\b(Diamond OA|Gold OA \+ Waiver|Gold OA|Hybrid|Subscription)\b;?\s*", re.I)
+    for k, row in out.items():
+        row = row[:mi] + row[mi + 1:]
+        note_i = PUBLIC_KEYS.index("note")
+        row[note_i] = model_words.sub("", row[note_i]).strip(" ;")
+        out[k] = row
+
     with open("data/apc.json", "w", encoding="utf-8") as f:
-        json.dump({"fields": OUT_KEYS, "source": "Database Jurnal Scopus Gratis APC", "journals": out},
+        json.dump({"fields": PUBLIC_KEYS, "source": "Database Jurnal Scopus Gratis APC", "journals": out},
                   f, ensure_ascii=False, separators=(",", ":"))
     with open("data/apc_unmatched.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)

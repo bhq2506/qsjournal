@@ -141,10 +141,6 @@ button, input, select { font: inherit; color: inherit; }
 .facts dd { margin: 0; line-height: 1.4; overflow-wrap: anywhere; }
 .facts dd small { display: block; color: var(--muted); font-size: 0.76rem; }
 .facts .side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-.model { font: 600 0.72rem/1 var(--font-body); padding: 4px 8px; border-radius: 999px; white-space: nowrap; color: var(--qn); background: var(--qn-bg); }
-.model.diamond { color: var(--q1); background: var(--q1-bg); }
-.model.waiver { color: var(--q3); background: var(--q3-bg); }
-.model.gold { color: var(--q2); background: var(--q2-bg); }
 .facts .verified { color: var(--q1); font-size: 0.72rem; font-weight: 600; }
 .facts .site { font-size: 0.78rem; color: var(--accent); text-decoration: none; white-space: nowrap; }
 .facts .site:hover { text-decoration: underline; text-underline-offset: 2px; }
@@ -212,17 +208,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
         <div class="chips" id="chips" role="group" aria-label="Filter by quartile"></div>
         <div class="opts">
           <label><input type="checkbox" id="oa"> Open access only</label>
-          <label>Model biaya
-            <select id="model">
-              <option value="all">Semua jurnal</option>
-              <option value="any">Ada data biaya</option>
-              <option value="Diamond OA">Diamond OA (gratis)</option>
-              <option value="Gold OA">Gold OA (ada APC)</option>
-              <option value="Hybrid">Hybrid</option>
-              <option value="Gold OA + Waiver">Gold OA + Waiver</option>
-              <option value="Subscription">Subscription</option>
-            </select>
-          </label>
+          <label><input type="checkbox" id="hasApc"> <span id="hasApcLbl">Ada data biaya</span></label>
           <label>Sort
             <select id="sort">
               <option value="title">Title A–Z</option>
@@ -259,7 +245,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   const extIcon = '<svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>';
 
   let DATA, J = [], S = [];
-  const state = { subject: -1, q: "", quart: "all", oa: false, model: "all", sort: "title", shown: PAGE };
+  const state = { subject: -1, q: "", quart: "all", oa: false, hasApc: false, sort: "title", shown: PAGE };
 
   // Restore last-used options (per browser only)
   try {
@@ -285,7 +271,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
     $("meta").textContent = `${fmt(J.length)} Scopus journals · ${S.length} QS subjects · SJR 2025 quartiles`;
     const nx = J.filter((j) => j.x).length;
     $("src").textContent = `Data: ${d.meta.source}. Generated ${d.meta.generated}.` + (nx ? ` Biaya publikasi, frekuensi terbit dan kecepatan review untuk ${fmt(nx)} jurnal: ${apc.source}.` : "");
-    $("model").querySelector('[value="any"]').textContent = `Ada data biaya (${fmt(nx)})`;
+    $("hasApcLbl").textContent = `Ada data biaya (${fmt(nx)})`;
     $("sort").value = state.sort;
     buildIndex();
     fromHash();
@@ -357,7 +343,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
     for (const j of J) {
       if (state.subject >= 0 && !j.s.includes(state.subject)) continue;
       if (state.oa && !j.oa) continue;
-      if (state.model !== "all" && !(j.x && (state.model === "any" || j.x[1] === state.model))) continue;
+      if (state.hasApc && !j.x) continue;
       if (terms.length && !terms.every((t) => j.k.includes(t))) continue;
       out.push(j);
     }
@@ -381,17 +367,16 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
     return out + (open ? "</mark>" : "");
   }
 
-  // apc row: [apc, model, review, submit->publish, frequency, url, note, verified source]
+  // apc row: [apc, review, submit->publish, frequency, url, note, verified source]
   function facts(x) {
-    const [apc, model, rev, tp, freq, url, note, src] = x;
-    const mc = model === "Diamond OA" ? "diamond" : /waiver/i.test(model) ? "waiver" : model === "Gold OA" ? "gold" : "";
+    const [apc, rev, tp, freq, url, note, src] = x;
     const href = url ? (/^https?:\/\//.test(url) ? url : "https://" + url) : "";
     const dash = '<span style="color:var(--muted)">–</span>';
     return `<dl class="facts">
       <div><dt>Biaya Publikasi</dt><dd>${apc ? esc(apc) : dash}${src ? `<small class="verified">✓ Sumber resmi: ${esc(src)}</small>` : ""}</dd></div>
       <div><dt>Frekuensi Terbit</dt><dd>${freq ? esc(freq) : dash}</dd></div>
       <div><dt>Kecepatan Review</dt><dd>${rev ? esc(rev) : dash}${rev && /minggu|week/i.test(rev) ? "<small>sampai keputusan pertama</small>" : ""}${tp ? `<small>Submit → terbit ${esc(tp)}</small>` : ""}</dd></div>
-      <div class="side">${model ? `<span class="model ${mc}">${esc(model)}</span>` : ""}${href ? `<a class="site" href="${esc(href)}" target="_blank" rel="noopener">Situs jurnal ↗</a>` : ""}</div>
+      <div class="side">${href ? `<a class="site" href="${esc(href)}" target="_blank" rel="noopener">Situs jurnal ↗</a>` : ""}</div>
       ${note ? `<div class="note">${esc(note)}</div>` : ""}
     </dl>`;
   }
@@ -462,7 +447,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   $("subjSelect").addEventListener("change", (e) => setSubject(+e.target.value, false));
   $("chips").addEventListener("click", (e) => { const b = e.target.closest(".chip"); if (b) { state.quart = b.dataset.q; state.shown = PAGE; render(); } });
   $("oa").addEventListener("change", (e) => { state.oa = e.target.checked; state.shown = PAGE; render(); });
-  $("model").addEventListener("change", (e) => { state.model = e.target.value; state.shown = PAGE; render(); });
+  $("hasApc").addEventListener("change", (e) => { state.hasApc = e.target.checked; state.shown = PAGE; render(); });
   $("sort").addEventListener("change", (e) => { state.sort = e.target.value; state.shown = PAGE; save(); render(); });
   $("ledger").addEventListener("click", (e) => {
     if (e.target.id === "more") { state.shown += PAGE; render(); return; }
