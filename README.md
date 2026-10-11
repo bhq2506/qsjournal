@@ -8,8 +8,8 @@ Setiap jurnal menampilkan **Nama Jurnal, Publisher, Quartile (SJR 2025)** dan **
 
 - 27.000 jurnal aktif · 56 QS subject · 5 broad faculty area
 - Cari berdasarkan judul, publisher, atau ISSN/eISSN (tekan `/` untuk fokus ke kotak pencarian)
-- Filter per QS subject, quartile (Q1–Q4, Not ranked), open access, dan ketersediaan data biaya
-- **Biaya Publikasi, Frekuensi Terbit, Kecepatan Review** untuk ±1.460 jurnal, dari *Database Jurnal Scopus Gratis APC*
+- Filter per QS subject, quartile (Q1–Q4, Not ranked), dan open access
+- **Frekuensi Terbit dan Kecepatan Review** untuk ±1.460 jurnal, dari *Database Jurnal Scopus Gratis APC*
 - Tag QS subject pada tiap jurnal bisa diklik untuk pindah ke subject tersebut
 - Link langsung ke subject: `.../#computer-science`, `.../#business-and-management-studies`, dst.
 
@@ -48,10 +48,10 @@ python scripts/build_data.py path/ke/QS_Subject_ASJCode_Journal_.xlsx
 git commit -am "Update data" && git push
 ```
 
-Data biaya/frekuensi/review (`data/apc.json`) dibangun terpisah:
+Data frekuensi/review (`data/publication_info.json`) dibangun terpisah:
 
 ```bash
-python scripts/build_apc.py "path/ke/Database Jurnal Scopus Gratis APC.xlsx"
+python scripts/build_publication_info.py "path/ke/Database Jurnal Scopus Gratis APC.xlsx"
 ```
 
 Pencocokan pakai ISSN/eISSN, lalu judul. Baris yang tidak cocok ditulis ke `data/apc_unmatched.csv` (tidak ikut di-commit).
@@ -63,5 +63,4 @@ Pencocokan pakai ISSN/eISSN, lalu judul. Baris yang tidak cocok ditulis ke `data
 - Jurnal masuk ke suatu QS subject jika minimal satu kode ASJC-nya cocok dengan kode ASJC yang dipetakan QS ke subject tersebut. Satu jurnal bisa muncul di beberapa subject.
 - Quartile adalah **SJR 2025 best quartile** lintas semua kategori Scopus jurnal tersebut, **bukan** quartile di kategori yang sesuai dengan QS subject. Jurnal yang tertulis Q1 bisa saja Q2/Q3 di kategori yang relevan.
 - Jurnal tanpa data SJR ditandai *Not ranked*.
-- Biaya publikasi, frekuensi terbit, dan kecepatan review berasal dari *Database Jurnal Scopus Gratis APC* dan **belum diverifikasi per jurnal**. Kecepatan review = waktu sampai keputusan pertama.
-- Biaya jurnal **MDPI** dikoreksi dari daftar APC resmi MDPI (`data/overrides/mdpi_apc.csv`, sumber https://www.mdpi.com/apc, 10 Okt 2026). Database sumber keliru menandai seluruh jurnal MDPI sebagai Diamond OA/gratis.
+- Frekuensi terbit dan kecepatan review berasal dari *Database Jurnal Scopus Gratis APC* dan belum diverifikasi per jurnal. Kecepatan review = waktu sampai keputusan pertama.

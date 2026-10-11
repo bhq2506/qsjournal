@@ -1,10 +1,10 @@
 """
-Build data/apc.json (publication fee, frequency, review speed) from
+Build data/publication_info.json (publication frequency, review speed) from
 "Database Jurnal Scopus Gratis APC.xlsx" and match it to data/journals.json.
 
 Usage:
     pip install openpyxl
-    python scripts/build_apc.py "path/to/Database Jurnal Scopus Gratis APC.xlsx"
+    python scripts/build_publication_info.py "path/to/Database Jurnal Scopus Gratis APC.xlsx"
 
 Matching: ISSN / eISSN first (closest title wins if several journals share an ISSN),
 then exact normalised title, then title without "(MDPI)"-style suffixes.
@@ -12,10 +12,6 @@ When one journal appears in several subject sheets with different values,
 each field takes the most common value (first one on a tie).
 Unmatched rows are written to data/apc_unmatched.csv for review.
 
-Corrections: data/overrides/mdpi_apc.csv (MDPI's official APC list, from
-https://www.mdpi.com/apc) overrides the workbook for every MDPI journal. The workbook
-wrongly lists MDPI journals as Diamond OA / free; MDPI is fully Gold OA with an APC.
-MDPI journals missing from the workbook also get their APC from this list.
 """
 import collections
 import csv
@@ -33,8 +29,7 @@ FIELDS = {
     "url": "URL", "issn": "ISSN/ E-ISSN", "model": "Model", "note": "Keterangan",
 }
 OUT_KEYS = ["apc", "model", "rev", "tp", "freq", "url", "note", "src"]
-PUBLIC_KEYS = [k for k in OUT_KEYS if k != "model"]
-MDPI_ALIASES = {"c journal of carbon research": "c", "oral health diseases therapies and technologies": "oral"}
+PUBLIC_KEYS = ["rev", "tp", "freq", "url", "note"]  # fee, model and fee source are not published
 
 
 def clean(v):
@@ -102,46 +97,21 @@ def main(path):
         best = collections.Counter(key(r) for r in rs).most_common(1)[0][0]
         out[str(sid)] = list(best) + [""]
 
-    # --- MDPI correction from the publisher's official APC list ---
-    mdpi = {}
-    with open("data/overrides/mdpi_apc.csv", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
-            mdpi[nt(row["journal"])] = (row["basic_apc"], row["retrieved"])
-    fixed = added = 0
-    for j in J:
-        if "mdpi" not in j[2].lower() and "multidisciplinary digital" not in j[2].lower():
-            continue
-        t = nt(re.sub(r"\s*\([^)]*\)$|\s*-\s*MDPI$", "", j[1]))
-        t = MDPI_ALIASES.get(t, t)
-        if t not in mdpi or mdpi[t][0].lower().startswith("see"):
-            continue
-        apc, when = mdpi[t]
-        if apc.lower() == "free":
-            apc_txt, model = "Gratis (APC ditiadakan MDPI)", "Diamond OA"
-        else:
-            apc_txt, model = f"{apc} (Gold OA, dibayar penulis setelah diterima)", "Gold OA"
-        src = f"mdpi.com/apc, {when}"
-        row = out.get(str(j[0]))
-        if row:
-            note = re.sub(r"Diamond OA;?\s*", "", row[6]).strip("; ")
-            out[str(j[0])] = [apc_txt, model, row[2], row[3], row[4], row[5], note, src]
-            fixed += 1
-        else:
-            out[str(j[0])] = [apc_txt, model, "", "", "", "", "", src]
-            added += 1
-    print(f"MDPI: corrected {fixed} workbook rows, added APC for {added} more MDPI journals")
-
-    # The publishing-model label (Diamond OA / Hybrid / ...) is unreliable in the source
-    # workbook, so it is not published: drop the column and model words from the notes.
-    mi = OUT_KEYS.index("model")
-    model_words = re.compile(r"\b(Diamond OA|Gold OA \+ Waiver|Gold OA|Hybrid|Subscription)\b;?\s*", re.I)
+    # Fee and publishing-model information in the source workbook is unreliable
+    # (e.g. every MDPI journal listed as free), so neither is published. Keep only
+    # review speed, submit-to-publish time, frequency, journal URL and a cleaned note.
+    fee_words = re.compile(r"gratis|apc|biaya|\$|waiver|free|diskon|default track|\bOA\b|murni|sejati|"
+                           r"pembaca|subscription|hybrid|diamond|gold", re.I)
+    public = {}
     for k, row in out.items():
-        row = row[:mi] + row[mi + 1:]
-        note_i = PUBLIC_KEYS.index("note")
-        row[note_i] = model_words.sub("", row[note_i]).strip(" ;")
-        out[k] = row
+        rec = dict(zip(OUT_KEYS, row))
+        rec["note"] = "; ".join(p.strip() for p in rec["note"].split(";") if p.strip() and not fee_words.search(p))
+        vals = [rec[f] for f in PUBLIC_KEYS]
+        if any(vals[:3]):
+            public[k] = vals
+    out = public
 
-    with open("data/apc.json", "w", encoding="utf-8") as f:
+    with open("data/publication_info.json", "w", encoding="utf-8") as f:
         json.dump({"fields": PUBLIC_KEYS, "source": "Database Jurnal Scopus Gratis APC", "journals": out},
                   f, ensure_ascii=False, separators=(",", ":"))
     with open("data/apc_unmatched.csv", "w", newline="", encoding="utf-8") as f:
