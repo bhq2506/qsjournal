@@ -210,7 +210,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
       <div class="controls">
         <div class="chips" id="chips" role="group" aria-label="Filter by quartile"></div>
         <div class="opts">
-          <button type="button" class="noapc-toggle" id="noapc" aria-pressed="false" title="Jurnal tanpa biaya publikasi menurut noapc.com">No APC <span class="c" id="noapcCount"></span></button>
+          <button type="button" class="noapc-toggle" id="noapc" aria-pressed="false" title="Jurnal tanpa APC menurut DOAJ">No APC <span class="c" id="noapcCount"></span></button>
           <label><input type="checkbox" id="oa"> Open access only</label>
           <label>Sort
             <select id="sort">
@@ -230,7 +230,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
 <footer class="foot">
   <p><strong>How journals are assigned.</strong> A journal appears under a QS subject when at least one of its Scopus ASJC codes matches the ASJC codes QS maps to that subject. A journal with several ASJC codes can sit in several subjects.</p>
   <p><strong>About the quartile.</strong> Quartile is the journal's SJR 2025 <em>best</em> quartile across all its Scopus categories. It is not specific to the QS subject shown, so a journal marked Q1 may be Q2 or lower in the category that matches your subject. Check the Scopus page before relying on it.</p>
-  <p><strong>No APC.</strong> Jurnal ditandai No APC jika tercantum di <a href="https://noapc.com" target="_blank" rel="noopener">noapc.com</a> sebagai jurnal open access tanpa biaya publikasi, dicocokkan lewat ISSN. Daftar ini dari pihak ketiga dan bisa tertinggal dari kebijakan terbaru jurnal; cek situs jurnal sebelum submit.</p>
+  <p><strong>No APC.</strong> Jurnal ditandai No APC jika <a href="https://doaj.org" target="_blank" rel="noopener">DOAJ</a> (Directory of Open Access Journals) mencatatnya tidak memungut APC, dicocokkan lewat ISSN. Data DOAJ diisi oleh penerbit dan bisa tertinggal dari kebijakan terbaru; sebagian jurnal tanpa APC masih memungut biaya lain (misalnya biaya submit). Cek situs jurnal sebelum submit.</p>
   <p id="src"></p>
 </footer>
 
@@ -426,7 +426,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
       return `<div class="row">
         <div style="min-width:0">
           <a class="jt" href="https://www.scopus.com/sourceid/${j.id}" target="_blank" rel="noopener" title="Open in Scopus">${highlight(j.t)}${extIcon}</a>
-          <div class="ids">${ids ? "<span>" + ids + "</span>" : ""}${j.oa ? '<span class="oa">Open access</span>' : ""}${j.na ? '<span class="noapc" title="Terdaftar di noapc.com sebagai jurnal tanpa biaya publikasi">No APC</span>' : ""}</div>
+          <div class="ids">${ids ? "<span>" + ids + "</span>" : ""}${j.oa ? '<span class="oa">Open access</span>' : ""}${j.na ? '<span class="noapc" title="Menurut DOAJ, jurnal ini tidak memungut APC">No APC</span>' : ""}</div>
           <div class="tags" aria-label="QS subject areas">${tags}</div>
         </div>
         <div class="pub">${highlight(j.p)}</div>
