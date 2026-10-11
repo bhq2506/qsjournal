@@ -159,9 +159,14 @@ button, input, select { font: inherit; color: inherit; }
 .q.Q4 { color: var(--q4); background: var(--q4-bg); }
 .q.NR { color: var(--qn); background: var(--qn-bg); font-size: 0.7rem; font-family: var(--font-body); }
 mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1px; }
-.more { display: flex; justify-content: center; padding: 16px; border-top: 1px solid var(--line); }
-.more button { border: 1px solid var(--line); background: var(--bg); padding: 8px 18px; border-radius: 8px; cursor: pointer; font-weight: 500; }
-.more button:hover { border-color: var(--accent); color: var(--accent); }
+.countbar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
+.pager { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; font-variant-numeric: tabular-nums; }
+.pager button { min-width: 34px; height: 34px; padding: 0 10px; border: 1px solid var(--line); background: var(--surface); border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+.pager button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.pager button[aria-current="page"] { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 600; cursor: default; }
+.pager button:disabled:not([aria-current]) { opacity: 0.4; cursor: default; }
+.pager .gap { padding: 0 4px; color: var(--muted); }
+.pager-bottom { display: flex; justify-content: center; padding: 16px; border-top: 1px solid var(--line); }
 .empty { padding: 40px 18px; text-align: center; color: var(--muted); }
 .loading { padding: 60px 18px; text-align: center; color: var(--muted); }
 .foot { max-width: 1280px; margin: 0 auto; padding-inline: 16px; padding-block: 0 40px; font-size: 0.78rem; color: var(--muted); line-height: 1.6; }
@@ -219,9 +224,18 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
               <option value="pub">Publisher</option>
             </select>
           </label>
+          <label>Show
+            <select id="size" aria-label="Journals per page">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+            per page
+          </label>
         </div>
       </div>
-      <div class="count" id="count"></div>
+      <div class="countbar"><div class="count" id="count"></div><nav class="pager" id="pagerTop" aria-label="Pagination"></nav></div>
     </div>
     <div class="ledger" id="ledger"><div class="loading">Loading journal list…</div></div>
   </section>
@@ -236,7 +250,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
 
 <script>
 (() => {
-  const PAGE = 50;
+  const SIZES = [10, 25, 50, 100];
   const QS = ["Q1", "Q2", "Q3", "Q4", "Not ranked"];
   const QRANK = { Q1: 1, Q2: 2, Q3: 3, Q4: 4, "Not ranked": 5 };
   const $ = (id) => document.getElementById(id);
@@ -248,14 +262,15 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   const extIcon = '<svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>';
 
   let DATA, J = [], S = [];
-  const state = { subject: -1, q: "", quart: "all", oa: false, noapc: false, sort: "title", shown: PAGE };
+  const state = { subject: -1, q: "", quart: "all", oa: false, noapc: false, sort: "title", page: 1, size: 25 };
 
   // Restore last-used options (per browser only)
   try {
     const saved = JSON.parse(localStorage.getItem("qsjf") || "{}");
     if (saved.sort) state.sort = saved.sort;
+    if (SIZES.includes(saved.size)) state.size = saved.size;
   } catch (e) {}
-  const save = () => { try { localStorage.setItem("qsjf", JSON.stringify({ sort: state.sort })); } catch (e) {} };
+  const save = () => { try { localStorage.setItem("qsjf", JSON.stringify({ sort: state.sort, size: state.size })); } catch (e) {} };
 
   const getJSON = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
   Promise.all([getJSON("data/journals.json"), getJSON("data/publication_info.json").catch(() => null), getJSON("data/noapc.json").catch(() => null)])
@@ -277,6 +292,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
     $("src").textContent = `Data: ${d.meta.source}. Generated ${d.meta.generated}.` + (nx ? ` Frekuensi terbit dan kecepatan review untuk ${fmt(nx)} jurnal: ${info.source}.` : "") + (NA.size ? ` Status No APC untuk ${fmt(NA.size)} jurnal: ${na.source} (diambil ${na.retrieved}).` : "");
     if (!NA.size) $("noapc").hidden = true;
     $("sort").value = state.sort;
+    $("size").value = String(state.size);
     buildIndex();
     fromHash();
     render();
@@ -329,7 +345,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   }
 
   function setSubject(i, scroll) {
-    state.subject = i; state.shown = PAGE;
+    state.subject = i; state.page = 1;
     const h = i < 0 ? "" : "#" + slug(S[i].name);
     if (location.hash !== h) history.replaceState(null, "", h || location.pathname + location.search);
     render();
@@ -413,13 +429,21 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
 
     const where = (state.noapc ? " with No APC" : "") + (s ? ` in ${s.name}` : "");
     const what = state.q ? ` matching “${state.q}”` : "";
-    $("count").textContent = `${fmt(list.length)} journal${list.length === 1 ? "" : "s"}${where}${what}`;
+    const pages = Math.max(1, Math.ceil(list.length / state.size));
+    if (state.page > pages) state.page = pages;
+    const from = (state.page - 1) * state.size;
+    const to = Math.min(from + state.size, list.length);
+    $("count").textContent = list.length
+      ? `${fmt(from + 1)}–${fmt(to)} of ${fmt(list.length)} journal${list.length === 1 ? "" : "s"}${where}${what}`
+      : `0 journals${where}${what}`;
+    const pagerHtml = pager(state.page, pages);
+    $("pagerTop").innerHTML = pagerHtml;
 
     if (!list.length) {
       $("ledger").innerHTML = `<div class="empty">No journals found${what}${where}. Try fewer words, an ISSN without the dash, or switch to <strong>All QS subjects</strong>.</div>`;
       return;
     }
-    const rows = list.slice(0, state.shown).map((j) => {
+    const rows = list.slice(from, to).map((j) => {
       const ids = [j.issn && "ISSN " + fmtIssn(j.issn), j.eissn && "eISSN " + fmtIssn(j.eissn)].filter(Boolean).join("</span><span>");
       const tags = j.s.map((i) => `<button class="tag${i === state.subject ? " on" : ""}" type="button" data-s="${i}">${esc(S[i].name)}</button>`).join("");
       const qc = j.q === "Not ranked" ? "NR" : j.q;
@@ -434,11 +458,36 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
         ${j.x ? facts(j.x) : ""}
       </div>`;
     });
-    const rest = list.length - state.shown;
     $("ledger").innerHTML =
       `<div class="row th"><span>Journal · QS subject areas</span><span>Publisher</span><span>Quartile</span></div>` +
       rows.join("") +
-      (rest > 0 ? `<div class="more"><button type="button" id="more">Show ${fmt(Math.min(PAGE, rest))} more · ${fmt(rest)} left</button></div>` : "");
+      (pages > 1 ? `<nav class="pager pager-bottom" aria-label="Pagination">${pagerHtml}</nav>` : "");
+  }
+
+  // Page buttons: first, last, current ±1 (more near the ends), with gaps
+  function pager(cur, pages) {
+    if (pages <= 1) return "";
+    const want = new Set([1, pages, cur - 1, cur, cur + 1]);
+    if (cur <= 3) [2, 3, 4].forEach((p) => want.add(p));
+    if (cur >= pages - 2) [pages - 1, pages - 2, pages - 3].forEach((p) => want.add(p));
+    const nums = [...want].filter((p) => p >= 1 && p <= pages).sort((a, b) => a - b);
+    const btn = (p, label, aria, disabled, current) =>
+      `<button type="button" data-page="${p}" aria-label="${aria}"${disabled ? " disabled" : ""}${current ? ' aria-current="page"' : ""}>${label}</button>`;
+    let html = btn(cur - 1, "‹ Prev", "Previous page", cur === 1, false);
+    let last = 0;
+    for (const p of nums) {
+      if (p - last > 1) html += '<span class="gap">…</span>';
+      html += btn(p, fmt(p), `Page ${p}`, p === cur, p === cur);
+      last = p;
+    }
+    return html + btn(cur + 1, "Next ›", "Next page", cur === pages, false);
+  }
+
+  function goPage(p) {
+    state.page = p;
+    render();
+    const top = $("count").getBoundingClientRect().top + window.scrollY - 110;
+    if (window.scrollY > top) window.scrollTo({ top, behavior: "smooth" });
   }
 
   // Events
@@ -446,21 +495,24 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   $("q").addEventListener("input", (e) => {
     $("clear").hidden = !e.target.value;
     clearTimeout(t);
-    t = setTimeout(() => { state.q = e.target.value; state.shown = PAGE; render(); }, 120);
+    t = setTimeout(() => { state.q = e.target.value; state.page = 1; render(); }, 120);
   });
-  $("clear").addEventListener("click", () => { $("q").value = ""; $("clear").hidden = true; state.q = ""; state.shown = PAGE; render(); $("q").focus(); });
+  $("clear").addEventListener("click", () => { $("q").value = ""; $("clear").hidden = true; state.q = ""; state.page = 1; render(); $("q").focus(); });
   $("index").addEventListener("click", (e) => { const b = e.target.closest(".subj"); if (b) setSubject(+b.dataset.s, false); });
   $("subjSelect").addEventListener("change", (e) => setSubject(+e.target.value, false));
-  $("chips").addEventListener("click", (e) => { const b = e.target.closest(".chip"); if (b) { state.quart = b.dataset.q; state.shown = PAGE; render(); } });
-  $("noapc").addEventListener("click", () => { state.noapc = !state.noapc; state.shown = PAGE; render(); });
-  $("oa").addEventListener("change", (e) => { state.oa = e.target.checked; state.shown = PAGE; render(); });
-  $("sort").addEventListener("change", (e) => { state.sort = e.target.value; state.shown = PAGE; save(); render(); });
+  $("chips").addEventListener("click", (e) => { const b = e.target.closest(".chip"); if (b) { state.quart = b.dataset.q; state.page = 1; render(); } });
+  $("noapc").addEventListener("click", () => { state.noapc = !state.noapc; state.page = 1; render(); });
+  $("oa").addEventListener("change", (e) => { state.oa = e.target.checked; state.page = 1; render(); });
+  $("sort").addEventListener("change", (e) => { state.sort = e.target.value; state.page = 1; save(); render(); });
   $("ledger").addEventListener("click", (e) => {
-    if (e.target.id === "more") { state.shown += PAGE; render(); return; }
+    const pg = e.target.closest("[data-page]");
+    if (pg && !pg.disabled) { goPage(+pg.dataset.page); return; }
     const tag = e.target.closest(".tag");
     if (tag) setSubject(+tag.dataset.s, true);
   });
-  window.addEventListener("hashchange", () => { if (!DATA) return; fromHash(); state.shown = PAGE; render(); });
+  $("pagerTop").addEventListener("click", (e) => { const pg = e.target.closest("[data-page]"); if (pg && !pg.disabled) goPage(+pg.dataset.page); });
+  $("size").addEventListener("change", (e) => { state.size = +e.target.value; state.page = 1; save(); render(); });
+  window.addEventListener("hashchange", () => { if (!DATA) return; fromHash(); state.page = 1; render(); });
   document.addEventListener("keydown", (e) => {
     if (e.key === "/" && document.activeElement !== $("q")) { e.preventDefault(); $("q").focus(); }
   });
