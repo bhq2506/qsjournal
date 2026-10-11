@@ -151,13 +151,13 @@ button, input, select { font: inherit; color: inherit; }
 .noapc-toggle .c { font: 400 0.74rem var(--font-mono); opacity: 0.8; }
 .noapc-toggle[aria-pressed="true"] { background: var(--q1); color: var(--surface); }
 .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
-.facts { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) auto; gap: 8px 20px; padding: 10px 12px; margin-top: 2px; background: var(--bg); border-radius: 8px; font-size: 0.84rem; align-items: start; }
+.facts { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 20px; padding: 10px 12px; margin-top: 2px; background: var(--bg); border-radius: 8px; font-size: 0.84rem; align-items: start; }
 .facts dt { font: 600 0.66rem/1.2 var(--font-body); text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 2px; }
 .facts dd { margin: 0; line-height: 1.4; overflow-wrap: anywhere; }
 .facts dd small { display: block; color: var(--muted); font-size: 0.76rem; }
-.facts .side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-.facts .site { font-size: 0.78rem; color: var(--accent); text-decoration: none; white-space: nowrap; }
-.facts .site:hover { text-decoration: underline; text-underline-offset: 2px; }
+.site { display: inline-block; margin-top: 6px; font-size: 0.8rem; font-weight: 500; color: var(--accent); text-decoration: none; white-space: nowrap; }
+.site:hover { text-decoration: underline; text-underline-offset: 2px; }
+.site.fallback { color: var(--muted); font-weight: 400; }
 .facts .note { grid-column: 1 / -1; color: var(--muted); font-size: 0.78rem; border-top: 1px dashed var(--line); padding-top: 6px; }
 .tag { border: 1px solid var(--line); background: none; border-radius: 4px; padding: 1px 7px; font-size: 0.74rem; color: var(--muted); cursor: pointer; line-height: 1.5; }
 .tag:hover { border-color: var(--accent); color: var(--accent); }
@@ -194,7 +194,6 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   .row .q { grid-column: 2; grid-row: 1; }
   .head h2 { font-size: 1.3rem; }
   .facts { grid-template-columns: minmax(0, 1fr); gap: 8px; }
-  .facts .side { flex-direction: row; align-items: center; justify-content: space-between; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
 </style>
@@ -256,6 +255,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   <p><strong>How journals are assigned.</strong> A journal appears under a QS subject when at least one of its Scopus ASJC codes matches the ASJC codes QS maps to that subject. A journal with several ASJC codes can sit in several subjects.</p>
   <p><strong>About the quartile.</strong> Quartile is the journal's SJR 2025 <em>best</em> quartile across all its Scopus categories. It is not specific to the QS subject shown, so a journal marked Q1 may be Q2 or lower in the category that matches your subject. Check the Scopus page before relying on it.</p>
   <p><strong>No APC.</strong> Jurnal ditandai No APC jika <a href="https://doaj.org" target="_blank" rel="noopener">DOAJ</a> (Directory of Open Access Journals) mencatatnya tidak memungut APC, dicocokkan lewat ISSN. Data DOAJ diisi oleh penerbit dan bisa tertinggal dari kebijakan terbaru; sebagian jurnal tanpa APC masih memungut biaya lain (misalnya biaya submit). Cek situs jurnal sebelum submit.</p>
+  <p><strong>Situs jurnal.</strong> Alamat situs dicari otomatis dari <a href="https://doaj.org" target="_blank" rel="noopener">DOAJ</a>, lalu <a href="https://www.wikidata.org" target="_blank" rel="noopener">Wikidata</a>, lalu database jurnal. Jika tidak ditemukan, link menuju halaman jurnal di SCImago yang memuat link ke situs jurnal.</p>
   <p id="src"></p>
 </footer>
 
@@ -400,12 +400,10 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   // info row: [review, submit->publish, frequency, url, note]
   function facts(x) {
     const [rev, tp, freq, url, note] = x;
-    const href = url ? (/^https?:\/\//.test(url) ? url : "https://" + url) : "";
     const dash = '<span style="color:var(--muted)">–</span>';
     return `<dl class="facts">
       <div><dt>Frekuensi Terbit</dt><dd>${freq ? esc(freq) : dash}</dd></div>
       <div><dt>Kecepatan Review</dt><dd>${rev ? esc(rev) : dash}${rev && /minggu|week/i.test(rev) ? "<small>sampai keputusan pertama</small>" : ""}${tp ? `<small>Submit → terbit ${esc(tp)}</small>` : ""}</dd></div>
-      <div class="side">${href ? `<a class="site" href="${esc(href)}" target="_blank" rel="noopener">Situs jurnal ↗</a>` : ""}</div>
       ${note ? `<div class="note">${esc(note)}</div>` : ""}
     </dl>`;
   }
@@ -464,7 +462,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
           <div class="ids">${ids ? "<span>" + ids + "</span>" : ""}${j.oa ? '<span class="oa">Open access</span>' : ""}${j.na ? '<span class="noapc" title="Menurut DOAJ, jurnal ini tidak memungut APC">No APC</span>' : ""}</div>
           <div class="tags" aria-label="QS subject areas">${tags}</div>
         </div>
-        <div class="pub">${highlight(j.p)}</div>
+        <div class="pub">${highlight(j.p)}<br>${siteLink(j)}</div>
         <span class="q ${qc}" title="SJR 2025 best quartile">${esc(j.q)}</span>
         ${j.x ? facts(j.x) : ""}
       </div>`;
@@ -473,6 +471,73 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
       `<div class="row th"><span>Journal · QS subject areas</span><span>Publisher</span><span>Quartile</span></div>` +
       rows.join("") +
       (pages > 1 ? `<nav class="pager pager-bottom" aria-label="Pagination">${pagerHtml}</nav>` : "");
+    resolveSites(list.slice(from, to));
+  }
+
+  // ---- Journal homepage ("Situs jurnal") ----
+  // Looked up live for the journals on the current page: DOAJ first (journal homepage
+  // recorded by the publisher), then Wikidata (official website, P856), then the URL
+  // from the publication-info workbook. If none is found, the link opens the journal's
+  // SCImago page, which itself links to the homepage.
+  const SITE = new Map(); // scopus id -> { url, src } | null (looked up, nothing found)
+  const pending = new Set();
+  const BAD_SITE = /hathitrust|proquest|e-helvetica|nbn-resolving|worldcat|oclc\.org|archive\.org|jstor\.org|zdb-katalog|loc\.gov|ebsco|doaj\.org|wikipedia|scimagojr|issn\.org|dnb\.de|d-nb\.info|bnf\.fr|catalog|sudoc|portico|clockss|persee\.fr|ncbi\.nlm|europepmc|library|biblioteca|bibliotheque|lockss|ulrichsweb|exlibris|journaltocs|crossref|twitter\.com|x\.com\/|facebook\.com|linkedin\.com|instagram\.com|youtube\.com|cnki\.net\/kns|wanfangdata|cqvip/i;
+  const withProto = (u) => (/^https?:\/\//i.test(u) ? u : "https://" + u);
+  const sjrUrl = (j) => `https://www.scimagojr.com/journalsearch.php?q=${j.id}&tip=sid&clean=0`;
+
+  function siteLink(j) {
+    const hit = SITE.get(j.id);
+    if (hit) return `<a class="site" data-sid="${j.id}" href="${esc(hit.url)}" target="_blank" rel="noopener" title="Situs resmi jurnal (sumber: ${hit.src})">Situs jurnal ↗</a>`;
+    return `<a class="site fallback" data-sid="${j.id}" href="${sjrUrl(j)}" target="_blank" rel="noopener" title="Halaman jurnal di SCImago, berisi link ke situs jurnal">Situs jurnal (via SCImago) ↗</a>`;
+  }
+
+  function scoreSite(u) {
+    let sc = /^https:/i.test(u) ? 2 : 0;
+    if (/journal|revista|revue|zeitschrift|jurnal/i.test(u)) sc += 1;
+    if (/sciencedirect\.com\/(science\/)?journal|tandfonline\.com\/toc|onlinelibrary\.wiley\.com\/journal|link\.springer\.com\/journal|springer\.com\/journal|mdpi\.com\/journal|journals\.sagepub|academic\.oup\.com|cambridge\.org\/core\/journals|emerald\.com|ieeexplore|degruyter|frontiersin/i.test(u)) sc += 3;
+    return sc - u.length / 200;
+  }
+
+  async function resolveSites(rows) {
+    const todo = rows.filter((j) => !SITE.has(j.id) && !pending.has(j.id) && (j.issn || j.eissn));
+    rows.forEach((j) => { if (!j.issn && !j.eissn && !SITE.has(j.id)) SITE.set(j.id, null); });
+    if (!todo.length) return;
+    todo.forEach((j) => pending.add(j.id));
+    const byIssn = new Map();
+    todo.forEach((j) => [j.issn, j.eissn].forEach((x) => { if (x) { const f = fmtIssn(x); if (!byIssn.has(f)) byIssn.set(f, []); byIssn.get(f).push(j); } }));
+    const issns = [...byIssn.keys()];
+    const found = new Map(); // id -> {url, src}
+    const tasks = [];
+    let answered = 0; // lookups that returned; if none did (offline), don't cache misses
+    // DOAJ (batches of 40 ISSNs)
+    for (let i = 0; i < issns.length; i += 40) {
+      const part = issns.slice(i, i + 40);
+      const q = "issn:(" + part.map((x) => `"${x}"`).join(" OR ") + ")";
+      tasks.push(fetch("https://doaj.org/api/search/journals/" + encodeURIComponent(q) + "?pageSize=100")
+        .then((r) => r.json()).then((d) => { answered++; (d.results || []).forEach((rec) => {
+          const b = rec.bibjson || {}, u = b.ref && b.ref.journal;
+          if (u) [b.pissn, b.eissn].forEach((x) => (byIssn.get(x) || []).forEach((j) => found.set(j.id, { url: withProto(u), src: "DOAJ" })));
+        }); }).catch(() => {}));
+    }
+    // Wikidata
+    const wd = new Map();
+    const sparql = `SELECT ?issn ?site WHERE { VALUES ?issn { ${issns.map((x) => `"${x}"`).join(" ")} } ?item wdt:P236 ?issn; wdt:P856 ?site. }`;
+    tasks.push(fetch("https://query.wikidata.org/sparql", { method: "POST", headers: { Accept: "application/sparql-results+json", "Content-Type": "application/x-www-form-urlencoded" }, body: "query=" + encodeURIComponent(sparql) })
+      .then((r) => r.json()).then((d) => { answered++; d.results.bindings.forEach((b) => {
+        const u = b.site.value;
+        if (BAD_SITE.test(u)) return;
+        (byIssn.get(b.issn.value) || []).forEach((j) => { if (!wd.has(j.id)) wd.set(j.id, []); wd.get(j.id).push(u); });
+      }); }).catch(() => {}));
+    await Promise.all(tasks);
+    todo.forEach((j) => {
+      pending.delete(j.id);
+      let hit = found.get(j.id);
+      if (!hit && wd.has(j.id)) hit = { url: wd.get(j.id).sort((a, b) => scoreSite(b) - scoreSite(a))[0], src: "Wikidata" };
+      if (!hit && j.x && j.x[3]) hit = { url: withProto(j.x[3]), src: "database jurnal" };
+      if (hit || answered) SITE.set(j.id, hit || null);
+      const a = document.querySelector(`.site[data-sid="${j.id}"]`);
+      if (a) a.outerHTML = siteLink(j);
+    });
   }
 
   // Page buttons: first, last, current ±1 (more near the ends), with gaps

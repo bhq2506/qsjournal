@@ -10,6 +10,7 @@ Setiap jurnal menampilkan **Nama Jurnal, Publisher, Quartile (SJR 2025)** dan **
 - Cari berdasarkan judul, publisher, atau ISSN/eISSN (tekan `/` untuk fokus ke kotak pencarian)
 - Filter per QS subject, quartile (Q1–Q4, Not ranked), open access, dan **No APC** (jurnal yang menurut [DOAJ](https://doaj.org) tidak memungut APC; ±3.680 jurnal)
 - **Frekuensi Terbit dan Kecepatan Review** untuk ±1.460 jurnal, dari *Database Jurnal Scopus Gratis APC*
+- Link **Situs jurnal** di setiap entry: dicari otomatis dari DOAJ, lalu Wikidata, lalu database jurnal; jika tidak ada, menuju halaman jurnal di SCImago
 - Daftar jurnal memakai pagination bernomor; jumlah per halaman bisa dipilih (10/25/50/100)
 - Tag QS subject pada tiap jurnal bisa diklik untuk pindah ke subject tersebut
 - Link langsung ke subject: `.../#computer-science`, `.../#business-and-management-studies`, dst.
