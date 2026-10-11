@@ -481,7 +481,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   // SCImago page, which itself links to the homepage.
   const SITE = new Map(); // scopus id -> { url, src } | null (looked up, nothing found)
   const pending = new Set();
-  const BAD_SITE = /hathitrust|proquest|e-helvetica|nbn-resolving|worldcat|oclc\.org|archive\.org|jstor\.org|zdb-katalog|loc\.gov|ebsco|doaj\.org|wikipedia|scimagojr|issn\.org|dnb\.de|d-nb\.info|bnf\.fr|catalog|sudoc|portico|clockss|persee\.fr|ncbi\.nlm|europepmc|library|biblioteca|bibliotheque|lockss|ulrichsweb|exlibris|journaltocs|crossref|twitter\.com|x\.com\/|facebook\.com|linkedin\.com|instagram\.com|youtube\.com|cnki\.net\/kns|wanfangdata|cqvip/i;
+  const BAD_SITE = /hathitrust|proquest|e-helvetica|nbn-resolving|worldcat|oclc\.org|archive\.org|jstor\.org|zdb-katalog|loc\.gov|ebsco|doaj\.org|wikipedia|scimagojr|issn\.org|dnb\.de|d-nb\.info|bnf\.fr|catalog|sudoc|portico|clockss|persee\.fr|ncbi\.nlm|europepmc|library|biblioteca|bibliotheque|lockss|ulrichsweb|exlibris|journaltocs|crossref|twitter\.com|x\.com\/|facebook\.com|linkedin\.com|instagram\.com|youtube\.com|cnki\.net\/kns|wanfangdata|cqvip|informaworld\.com|metapress\.com|interscience\.wiley\.com|blackwell-synergy\.com|journalsonline\.tandf|swetswise|springerlink\.com\/content\/\d|openurl/i;
   const withProto = (u) => (/^https?:\/\//i.test(u) ? u : "https://" + u);
   const sjrUrl = (j) => `https://www.scimagojr.com/journalsearch.php?q=${j.id}&tip=sid&clean=0`;
 
