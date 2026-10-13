@@ -61,7 +61,7 @@ html, body { margin: 0; }
 body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body); -webkit-font-smoothing: antialiased; }
 [hidden] { display: none !important; }
 a { color: inherit; }
-button, input, select { font: inherit; color: inherit; }
+button, input, select, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .top {
@@ -87,7 +87,7 @@ button, input, select { font: inherit; color: inherit; }
 .wrap { max-width: 1280px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 48px; display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 28px; align-items: start; }
 
 /* Subject index */
-.index { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 92px); max-height: calc(100vh - 110px); overflow-y: auto; padding-right: 4px; }
+.index { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 130px); max-height: calc(100vh - 150px); overflow-y: auto; padding-right: 4px; }
 .index ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
 .index-bar { display: flex; justify-content: space-between; align-items: center; margin: 14px 0 4px; padding: 0 10px; }
 .index-bar span { font: 600 0.7rem/1 var(--font-body); text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); }
@@ -183,7 +183,60 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
 .foot { max-width: 1280px; margin: 0 auto; padding-inline: 16px; padding-block: 0 40px; font-size: 0.78rem; color: var(--muted); line-height: 1.6; }
 .foot p { max-width: 75ch; margin: 0 0 6px; }
 
+/* Mode tabs */
+.modes { max-width: 1280px; margin: 0 auto; display: flex; gap: 4px; }
+.modes button { border: 0; background: none; color: var(--on-brand-muted); padding: 8px 14px 9px; font-weight: 600; font-size: 0.9rem; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -3px; }
+.modes button:hover { color: var(--on-brand); }
+.modes button[aria-selected="true"] { color: var(--on-brand); border-bottom-color: var(--gold); }
+.modes .new { font: 700 0.6rem/1 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; background: var(--gold); color: #1d2b3f; padding: 3px 5px; border-radius: 3px; margin-left: 6px; vertical-align: 2px; }
+
+/* Journal Finder */
+.finder { max-width: 1280px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 48px; display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 28px; align-items: start; }
+.fform { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 130px); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: grid; gap: 14px; }
+.fform h2 { font: 700 1.3rem/1.2 var(--font-display); margin: 0; }
+.fform .lede { margin: 0; color: var(--muted); font-size: 0.88rem; }
+.fform label.f { display: grid; gap: 6px; font-weight: 600; font-size: 0.85rem; }
+.fform label.f span.hint { font-weight: 400; color: var(--muted); font-size: 0.78rem; }
+.fform input[type="text"], .fform textarea, .fform select { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--bg); color: var(--ink); font-weight: 400; font-size: 0.92rem; }
+.fform textarea { min-height: 180px; resize: vertical; line-height: 1.5; }
+.fform input:focus, .fform textarea:focus, .fform select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); background: var(--surface); }
+.fform .row2 { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: 0.85rem; }
+.fform .qpick { display: flex; gap: 4px; flex-wrap: wrap; }
+.fform .qpick button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 11px; font-size: 0.8rem; cursor: pointer; }
+.fform .qpick button[aria-pressed="true"] { background: var(--active); color: var(--on-active); border-color: var(--active); }
+.fbtn { border: 0; background: var(--accent); color: #fff; font-weight: 600; font-size: 0.95rem; padding: 11px 16px; border-radius: 8px; cursor: pointer; }
+.fbtn:hover { filter: brightness(1.08); }
+.fbtn:disabled { opacity: 0.6; cursor: progress; }
+.fnote { font-size: 0.76rem; color: var(--muted); margin: 0; }
+.fres { min-width: 0; display: grid; gap: 12px; }
+.fres-head { display: grid; gap: 8px; }
+.fres-head h3 { margin: 0; font: 700 1.15rem/1.3 var(--font-display); }
+.kp { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.8rem; color: var(--muted); }
+.kp span.k { background: var(--accent-soft); color: var(--accent); border-radius: 4px; padding: 2px 8px; font-weight: 500; }
+.fempty { background: var(--surface); border: 1px dashed var(--line); border-radius: 10px; padding: 28px 22px; color: var(--muted); }
+.fempty ol { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 4px; }
+.fj { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 4px 14px; align-items: start; }
+.fj .rank { font: 700 1.05rem/1.4 var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.fj .pubname { font-size: 0.86rem; color: var(--muted); margin-top: 2px; }
+.fj .side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.fit { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 0.82rem; flex-wrap: wrap; }
+.fit .bar { width: 120px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; flex: none; }
+.fit .bar i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.fit b { color: var(--ink); }
+.sim { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 0.82rem; }
+.sim li { color: var(--muted); padding-left: 14px; position: relative; }
+.sim li::before { content: ""; position: absolute; left: 2px; top: 0.6em; width: 5px; height: 5px; border-radius: 50%; background: var(--line); }
+.sim a { color: var(--ink); text-decoration: none; }
+.sim a:hover { color: var(--accent); text-decoration: underline; }
+.fmore { justify-self: center; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 16px; cursor: pointer; font-weight: 500; }
+.fmore:hover { border-color: var(--accent); color: var(--accent); }
+.ferr { background: var(--q4-bg); color: var(--q4); border-radius: 8px; padding: 12px 14px; font-size: 0.88rem; }
+
 @media (max-width: 900px) {
+  .finder { grid-template-columns: minmax(0, 1fr); gap: 18px; padding-top: 16px; }
+  .fform { position: static; }
+  .fj { grid-template-columns: minmax(0, 1fr) auto; }
+  .fj .rank { display: none; }
   .top-inner { grid-template-columns: 1fr; gap: 10px; }
   .wrap { grid-template-columns: minmax(0, 1fr); gap: 16px; padding-top: 14px; }
   .index { display: none; }
@@ -211,9 +264,13 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
       <button class="clear" id="clear" type="button" aria-label="Clear search" hidden>✕</button>
     </div>
   </div>
+  <nav class="modes" role="tablist" aria-label="Mode">
+    <button type="button" role="tab" id="tabBrowse" aria-selected="true">Browse journals</button>
+    <button type="button" role="tab" id="tabFinder" aria-selected="false">Journal Finder<span class="new">New</span></button>
+  </nav>
 </header>
 
-<main class="wrap">
+<main class="wrap" id="browseView">
   <nav class="index" id="index" aria-label="QS subject areas"></nav>
   <section style="min-width:0">
     <select class="subj-select" id="subjSelect" aria-label="QS subject area"></select>
@@ -248,6 +305,50 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
       <div class="countbar"><div class="count" id="count"></div><nav class="pager" id="pagerTop" aria-label="Pagination"></nav></div>
     </div>
     <div class="ledger" id="ledger"><div class="loading">Loading journal list…</div></div>
+  </section>
+</main>
+
+<main class="finder" id="finderView" hidden>
+  <form class="fform" id="fform" autocomplete="off">
+    <h2>Find a journal for your manuscript</h2>
+    <p class="lede">Paste your title and abstract. We look for recently published articles on the same topic and rank the Scopus journals that publish them.</p>
+    <label class="f" for="fTitle">Title
+      <input type="text" id="fTitle" required placeholder="e.g. Digital twin-based inventory optimisation in pharmaceutical supply chains">
+    </label>
+    <label class="f" for="fAbs">Abstract <span class="hint">English works best. Minimum 30 words.</span>
+      <textarea id="fAbs" required placeholder="Paste your abstract here"></textarea>
+    </label>
+    <label class="f" for="fKw">Keywords <span class="hint">Optional, separated by commas</span>
+      <input type="text" id="fKw" placeholder="e.g. digital twin, inventory, pharmaceutical supply chain">
+    </label>
+    <label class="f" for="fSubj">QS subject <span class="hint">Optional</span>
+      <select id="fSubj"></select>
+    </label>
+    <div class="row2">
+      <span>Quartile</span>
+      <div class="qpick" id="fQ" role="group" aria-label="Quartile">
+        <button type="button" data-q="Q1" aria-pressed="true">Q1</button>
+        <button type="button" data-q="Q2" aria-pressed="true">Q2</button>
+        <button type="button" data-q="Q3" aria-pressed="true">Q3</button>
+        <button type="button" data-q="Q4" aria-pressed="true">Q4</button>
+      </div>
+    </div>
+    <div class="row2">
+      <label><input type="checkbox" id="fNoApc"> No APC only</label>
+      <label><input type="checkbox" id="fOa"> Open access only</label>
+    </div>
+    <button class="fbtn" type="submit" id="fGo">Find matching journals</button>
+    <p class="fnote">Only the key phrases extracted from your text are sent to <a href="https://openalex.org" target="_blank" rel="noopener">OpenAlex</a>; the full abstract stays in your browser. Results are suggestions: always read the journal's aims and scope before submitting.</p>
+  </form>
+  <section class="fres" id="fres" aria-live="polite">
+    <div class="fempty">
+      <strong>How it works</strong>
+      <ol>
+        <li>Key phrases are taken from your title, abstract and keywords.</li>
+        <li>OpenAlex is searched for similar articles published in the last six years.</li>
+        <li>Journals are ranked by how many similar articles they published and how closely those match, limited to the Scopus journals in this list.</li>
+      </ol>
+    </div>
   </section>
 </main>
 
@@ -304,6 +405,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
     $("sort").value = state.sort;
     $("size").value = String(state.size);
     buildIndex();
+    buildFinder();
     fromHash();
     render();
   }
@@ -355,6 +457,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   }
 
   function setSubject(i, scroll) {
+    if (mode !== "browse") setMode("browse", false);
     state.subject = i; state.page = 1;
     const h = i < 0 ? "" : "#" + slug(S[i].name);
     if (location.hash !== h) history.replaceState(null, "", h || location.pathname + location.search);
@@ -364,7 +467,27 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
 
   function fromHash() {
     const h = decodeURIComponent(location.hash.slice(1));
+    if (h === "finder") { setMode("finder", false); return; }
+    setMode("browse", false);
     state.subject = h ? S.findIndex((s) => slug(s.name) === h) : -1;
+  }
+
+  // ---- Mode switch: Browse / Journal Finder ----
+  let mode = "browse";
+  function setMode(m, push) {
+    mode = m;
+    const f = m === "finder";
+    $("browseView").hidden = f;
+    $("finderView").hidden = !f;
+    document.querySelector(".foot").hidden = f;
+    document.querySelector(".search").hidden = f;
+    $("tabBrowse").setAttribute("aria-selected", String(!f));
+    $("tabFinder").setAttribute("aria-selected", String(f));
+    if (push) {
+      const h = f ? "#finder" : state.subject >= 0 ? "#" + slug(S[state.subject].name) : "";
+      if (location.hash !== h) history.replaceState(null, "", h || location.pathname + location.search);
+    }
+    if (f) setTimeout(() => $("fTitle").focus(), 0);
   }
 
   function matches() {
@@ -539,6 +662,180 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
     });
   }
 
+
+  // ======================= Journal Finder =======================
+  // 1) extract key phrases from title + abstract (RAKE-style, in the browser)
+  // 2) search OpenAlex for similar recent articles (two queries: key phrases OR'ed, title core AND'ed)
+  // 3) map each article's journal (ISSN) to the Scopus list and rank journals by summed relevance
+  const STOP = new Set(("a about above across after again against all almost also although always among an and another any are around as at be because been before being below between both but by can could did do does doing done due during each either else enough especially etc even ever every for from further furthermore had has have having here hence how however i if in into is it its itself just less like made make makes many may might more moreover most mostly much must namely near nearly neither no nor not of off often on once one only onto or other others otherwise our out over own per perhaps rather really same several shall should since so some such than that the their them then there thereby therefore these they this those though through throughout thus to together too toward towards under until upon us very via was we well were what whatever when where whereas whether which while who whom whose why will with within without would yet you your " +
+    "abstract aim aims analyse analysed analyses analysis analyze analyzed approach approaches article based paper papers purpose purposes research researchers result resulted results reveal reveals revealed show showed shown shows study studies studied finding findings found method methods methodology methodological objective objectives propose proposed proposes present presents presented provide provides provided using use used uses new novel significant significantly important importantly various different first second third main key overall respectively among within total given addition additionally indicate indicates indicated suggest suggests suggested conclude concludes concluded conclusion conclusions implication implications contribute contributes contribution contributions examine examines examined investigate investigates investigated explore explores explored discuss discussed demonstrate demonstrates demonstrated evaluate evaluates evaluated develop develops developed employ employs employed apply applies applied obtained obtain compared compare comparison increase increased decrease decreased effect effects role roles level levels high higher low lower large larger small smaller can could year years data paper's work works field case cases reduce reduces reduced reducing improve improves improved improving enhance enhances enhanced enhancing offer offers offered offering help helps helped practical better best good well-known able allow allows allowed lead leads led leading make making makes include includes including included consider considers considered considering " +
+    "yang dan di ke dari untuk dengan pada dalam ini itu atau adalah sebagai oleh juga tidak akan telah dapat lebih serta bahwa tersebut karena maka secara para hasil penelitian studi metode menggunakan berdasarkan terhadap antara").split(/\s+/));
+
+  function keyPhrases(title, abstract, kws) {
+    const text = (title + " . " + title + " . " + abstract); // title counted twice
+    const tokens = norm(text).split(/([.,;:!?()\[\]"\/]|\s+)/);
+    const phrases = []; let cur = [];
+    const flush = () => { if (cur.length) { for (let i = 0; i < cur.length; i += 3) phrases.push(cur.slice(i, i + 3)); } cur = []; };
+    for (let t of tokens) {
+      if (!t || /^\s+$/.test(t)) continue;
+      t = t.replace(/^[-']+|[-']+$/g, "");
+      if (!t || /^[.,;:!?()\[\]"\/]$/.test(t) || STOP.has(t) || /^\d+(\.\d+)?%?$/.test(t) || t.length < 3) { flush(); continue; }
+      cur.push(t);
+    }
+    flush();
+    const freq = {}, deg = {};
+    phrases.forEach((p) => p.forEach((w) => { freq[w] = (freq[w] || 0) + 1; deg[w] = (deg[w] || 0) + p.length; }));
+    const titleN = norm(title);
+    const scored = new Map();
+    phrases.forEach((p) => {
+      const key = p.join(" ");
+      if (scored.has(key)) { scored.get(key).n++; return; }
+      let sc = p.reduce((a, w) => a + deg[w] / freq[w], 0);
+      if (titleN.includes(key)) sc *= 1.6;
+      scored.set(key, { key, sc, n: 1, len: p.length });
+    });
+    const ranked = [...scored.values()].map((x) => ({ ...x, sc: x.sc * (1 + 0.3 * (x.n - 1)) })).sort((a, b) => b.sc - a.sc);
+    const out = [];
+    (kws || []).forEach((k) => { const kk = norm(k).trim(); if (kk && !out.includes(kk)) out.push(kk); });
+    for (const r of ranked) {
+      if (out.length >= 9) break;
+      if (out.some((o) => o.includes(r.key) || (r.key.includes(o) && r.len > 1))) {
+        // keep the longer, more specific phrase
+        const i = out.findIndex((o) => r.key.includes(o) && r.len > 1);
+        if (i >= 0 && out.length) out[i] = r.key;
+        continue;
+      }
+      if (r.len === 1 && r.key.length < 5) continue;
+      out.push(r.key);
+    }
+    return [...new Set(out)];
+  }
+  function titleCore(title) {
+    const ws = norm(title).split(/[^a-z0-9\-]+/).filter((w) => w.length > 2 && !STOP.has(w));
+    return [...new Set(ws)].slice(0, 5);
+  }
+
+  const OA = "https://api.openalex.org/works";
+  async function oaSearch(search, fromYear) {
+    const url = `${OA}?search=${encodeURIComponent(search)}&filter=from_publication_date:${fromYear}-01-01,type:article&per_page=200&select=id,doi,title,publication_year,relevance_score,primary_location`;
+    const r = await fetch(url);
+    if (r.status === 429) throw new Error("limit");
+    if (!r.ok) throw new Error("http " + r.status);
+    return (await r.json()).results || [];
+  }
+
+  let ISSN2J = null;
+  function issnIndex() {
+    if (ISSN2J) return ISSN2J;
+    ISSN2J = new Map();
+    J.forEach((j) => [j.issn, j.eissn].forEach((x) => { if (x) ISSN2J.set(x.toUpperCase(), j); }));
+    return ISSN2J;
+  }
+
+  const F = { results: null, shown: 20, phrases: [], analysed: 0, outside: 0, quarts: new Set(["Q1", "Q2", "Q3", "Q4"]) };
+
+  function buildFinder() {
+    let opts = `<option value="-1">Any subject</option>`;
+    DATA.broad.forEach((b) => {
+      const list = S.map((s, i) => [s, i]).filter(([s]) => (s.group || s.broad[0]) === b);
+      opts += `<optgroup label="${esc(b)}">` + list.map(([s, i]) => `<option value="${i}">${esc(s.name)}</option>`).join("") + "</optgroup>";
+    });
+    $("fSubj").innerHTML = opts;
+  }
+
+  async function runFinder(e) {
+    e.preventDefault();
+    const title = $("fTitle").value.trim(), abs = $("fAbs").value.trim();
+    const kws = $("fKw").value.split(/[,;]/).map((s) => s.trim()).filter(Boolean);
+    const nWords = (title + " " + abs).split(/\s+/).filter(Boolean).length;
+    if (!title || nWords < 30) {
+      $("fres").innerHTML = `<div class="ferr">Enter a title and an abstract of at least 30 words so the topic can be recognised.</div>`;
+      return;
+    }
+    const phrases = keyPhrases(title, abs, kws);
+    const core = titleCore(title);
+    F.phrases = phrases;
+    $("fGo").disabled = true; $("fGo").textContent = "Searching…";
+    $("fres").innerHTML = `<div class="fempty">Looking for similar articles on <strong>${esc(phrases.slice(0, 4).join(", "))}</strong>…</div>`;
+    const fromYear = new Date().getFullYear() - 6;
+    const qA = phrases.map((p) => (p.includes(" ") ? `"${p}"` : p)).join(" OR ");
+    const qB = core.length >= 2 ? core.join(" ") : "";
+    try {
+      const [ra, rb] = await Promise.all([oaSearch(qA, fromYear), qB ? oaSearch(qB, fromYear).catch(() => []) : Promise.resolve([])]);
+      const works = new Map();
+      [ra, rb].forEach((list) => {
+        const max = Math.max(1, ...list.map((w) => w.relevance_score || 0));
+        list.forEach((w) => {
+          const s = (w.relevance_score || 0) / max;
+          const cur = works.get(w.id);
+          if (cur) cur.s += s; else works.set(w.id, { w, s });
+        });
+      });
+      const idx = issnIndex();
+      const agg = new Map(); let outside = 0;
+      for (const { w, s } of works.values()) {
+        const src = w.primary_location && w.primary_location.source;
+        const issns = (src && (src.issn || (src.issn_l ? [src.issn_l] : []))) || [];
+        let j = null;
+        for (const x of issns) { j = idx.get(String(x).replace("-", "").toUpperCase()); if (j) break; }
+        if (!j) { outside++; continue; }
+        if (!agg.has(j.id)) agg.set(j.id, { j, score: 0, n: 0, works: [] });
+        const a = agg.get(j.id); a.score += s; a.n++; a.works.push({ w, s });
+      }
+      F.results = [...agg.values()].sort((a, b) => b.score - a.score);
+      F.results.forEach((a) => a.works.sort((x, y) => y.s - x.s));
+      F.analysed = works.size; F.outside = outside; F.shown = 20;
+      renderFinder();
+    } catch (err) {
+      $("fres").innerHTML = err.message === "limit"
+        ? `<div class="ferr">OpenAlex has reached its daily search limit for your connection. Please try again tomorrow.</div>`
+        : `<div class="ferr">The article search could not be reached. Check your internet connection and try again.</div>`;
+    } finally {
+      $("fGo").disabled = false; $("fGo").textContent = "Find matching journals";
+    }
+  }
+
+  function renderFinder() {
+    if (!F.results) return;
+    const subj = +$("fSubj").value, noapc = $("fNoApc").checked, oa = $("fOa").checked;
+    const list = F.results.filter(({ j }) =>
+      (subj < 0 || j.s.includes(subj)) && (!noapc || j.na) && (!oa || j.oa) && (F.quarts.has(j.q) || (j.q === "Not ranked" && F.quarts.size === 4)));
+    const top = list.length ? list[0].score : 1;
+    const kp = `<div class="kp">Searched for: ${F.phrases.map((p) => `<span class="k">${esc(p)}</span>`).join("")}</div>`;
+    const head = `<div class="fres-head"><h3>${list.length ? `${fmt(list.length)} matching journal${list.length === 1 ? "" : "s"}` : "No matching journals"}</h3>${kp}
+      <div class="fnote">Based on ${fmt(F.analysed)} similar articles since ${new Date().getFullYear() - 6}; ${fmt(F.outside)} of them appeared in journals outside this Scopus list and were left out.</div></div>`;
+    if (!list.length) {
+      $("fres").innerHTML = head + `<div class="fempty">No journal in the list fits the filters you chose. Try allowing more quartiles, removing the subject or the No APC filter, or adding keywords.</div>`;
+      return;
+    }
+    const cards = list.slice(0, F.shown).map((a, i) => {
+      const { j } = a, rel = a.score / top;
+      const label = rel >= 0.6 ? "Strong match" : rel >= 0.3 ? "Good match" : "Possible match";
+      const qc = j.q === "Not ranked" ? "NR" : j.q;
+      const ids = [j.issn && "ISSN " + fmtIssn(j.issn), j.eissn && "eISSN " + fmtIssn(j.eissn)].filter(Boolean).join("</span><span>");
+      const tags = j.s.map((si) => `<button class="tag" type="button" data-s="${si}">${esc(S[si].name)}</button>`).join("");
+      const sims = a.works.slice(0, 3).map(({ w }) => {
+        const href = w.doi || w.id;
+        return `<li><a href="${esc(href)}" target="_blank" rel="noopener">${esc(w.title || "Untitled")}</a> (${w.publication_year || "n.d."})</li>`;
+      }).join("");
+      return `<article class="fj">
+        <div class="rank">${i + 1}</div>
+        <div style="min-width:0">
+          <a class="jt" href="https://www.scopus.com/sourceid/${j.id}" target="_blank" rel="noopener" title="Open in Scopus">${esc(j.t)}${extIcon}</a>
+          <div class="pubname">${esc(j.p)}</div>
+          <div class="ids">${ids ? "<span>" + ids + "</span>" : ""}${j.oa ? '<span class="oa">Open access</span>' : ""}${j.na ? '<span class="noapc" title="Menurut DOAJ, jurnal ini tidak memungut APC">No APC</span>' : ""}</div>
+          <div class="fit"><span class="bar" aria-hidden="true"><i style="width:${Math.max(6, Math.round(rel * 100))}%"></i></span><b>${label}</b><span>${fmt(a.n)} similar article${a.n === 1 ? "" : "s"}</span></div>
+          <ul class="sim">${sims}</ul>
+          <div class="tags" aria-label="QS subject areas">${tags}</div>
+        </div>
+        <div class="side"><span class="q ${qc}" title="SJR 2025 best quartile">${esc(j.q)}</span>${siteLink(j)}</div>
+      </article>`;
+    }).join("");
+    const more = list.length > F.shown ? `<button type="button" class="fmore" id="fMore">Show ${fmt(Math.min(20, list.length - F.shown))} more of ${fmt(list.length)}</button>` : "";
+    $("fres").innerHTML = head + cards + more;
+    resolveSites(list.slice(0, F.shown).map((a) => a.j));
+  }
+
   // Page buttons: first, last, current ±1 (more near the ends), with gaps
   function pager(cur, pages) {
     if (pages <= 1) return "";
@@ -587,6 +884,23 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   });
   $("pagerTop").addEventListener("click", (e) => { const pg = e.target.closest("[data-page]"); if (pg && !pg.disabled) goPage(+pg.dataset.page); });
   $("size").addEventListener("change", (e) => { state.size = +e.target.value; state.page = 1; save(); render(); });
+  $("tabBrowse").addEventListener("click", () => setMode("browse", true));
+  $("tabFinder").addEventListener("click", () => setMode("finder", true));
+  $("fform").addEventListener("submit", runFinder);
+  ["fSubj", "fNoApc", "fOa"].forEach((id) => $(id).addEventListener("change", () => { F.shown = 20; renderFinder(); }));
+  $("fQ").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-q]"); if (!b) return;
+    const on = b.getAttribute("aria-pressed") !== "true";
+    if (!on && F.quarts.size === 1) return; // keep at least one quartile
+    b.setAttribute("aria-pressed", String(on));
+    on ? F.quarts.add(b.dataset.q) : F.quarts.delete(b.dataset.q);
+    F.shown = 20; renderFinder();
+  });
+  $("fres").addEventListener("click", (e) => {
+    if (e.target.id === "fMore") { F.shown += 20; renderFinder(); return; }
+    const tag = e.target.closest(".tag");
+    if (tag) setSubject(+tag.dataset.s, true);
+  });
   window.addEventListener("hashchange", () => { if (!DATA) return; fromHash(); state.page = 1; render(); });
   document.addEventListener("keydown", (e) => {
     if (e.key === "/" && document.activeElement !== $("q")) { e.preventDefault(); $("q").focus(); }
