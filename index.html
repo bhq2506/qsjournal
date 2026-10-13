@@ -786,6 +786,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
       F.results.forEach((a) => a.works.sort((x, y) => y.s - x.s));
       F.analysed = works.size; F.outside = outside; F.shown = 20;
       renderFinder();
+      if (window.matchMedia("(max-width: 900px)").matches) $("fres").scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (err) {
       $("fres").innerHTML = err.message === "limit"
         ? `<div class="ferr">OpenAlex has reached its daily search limit for your connection. Please try again tomorrow.</div>`
