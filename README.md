@@ -53,10 +53,6 @@ git commit -am "Update data" && git push
 
 Data frekuensi/review (`data/publication_info.json`) dibangun terpisah:
 
-```bash
-python scripts/build_publication_info.py "path/ke/Database Jurnal Scopus Gratis APC.xlsx"
-```
-
 Pencocokan pakai ISSN/eISSN, lalu judul. Baris yang tidak cocok ditulis ke `data/apc_unmatched.csv` (tidak ikut di-commit).
 
 Status No APC (`data/noapc.json`) diperbarui dari API DOAJ (±5 menit):
