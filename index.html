@@ -223,6 +223,9 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   .head h2 { font-size: 1.3rem; }
   .facts { grid-template-columns: minmax(0, 1fr); gap: 8px; }
 }
+.credit { max-width: 1280px; margin: 0 auto; padding-inline: 16px; padding-block: 16px 28px; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--muted); text-align: center; }
+.credit a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.credit a:hover { text-decoration: underline; text-underline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
 </style>
 </head>
@@ -340,6 +343,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1
   <p><strong>No APC.</strong> Jurnal ditandai No APC jika <a href="https://doaj.org" target="_blank" rel="noopener">DOAJ</a> (Directory of Open Access Journals) mencatatnya tidak memungut APC, dicocokkan lewat ISSN. Data DOAJ diisi oleh penerbit dan bisa tertinggal dari kebijakan terbaru; sebagian jurnal tanpa APC masih memungut biaya lain (misalnya biaya submit). Cek situs jurnal sebelum submit.</p>
   <p id="src"></p>
 </footer>
+<div class="credit">Developed by <a href="https://its.id/baihaqi" target="_blank" rel="noopener">Baihaqi</a>, vibe coded with <a href="https://claude.ai" target="_blank" rel="noopener">Claude.ai</a></div>
 
 <script>
 (() => {
